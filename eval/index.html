@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Evaluation Tool</title>
+    <script src="static/scripts/handleEval.js"></script>
+    <link rel="stylesheet" href="static/style/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Audio Evaluation Tool</h1>
+        <div class="form-group">
+            <label for="meta-file">Meta File:</label>
+            <input type="text" id="meta-file" placeholder="Enter meta file path">
+        </div>
+        <div class="form-group">
+            <label for="dataset-path">Dataset Path:</label>
+            <input type="text" id="dataset-path" placeholder="Enter dataset path">
+        </div>
+        <div>Progress: <a id="progress"></a></div>
+        <button onclick="startEvaluation()">Start Evaluation</button>
+        <div class="results">
+            <h2>Results</h2>
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>MCD</th>
+                        <th>PESQ</th>
+                        <th>STOI</th>
+                        <th>ESTOI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Results will be populated here -->
+                </tbody>
+            </table>
+            <img id="hist-mcd" src="/static/graphs/mcd.png" width="400">
+            <img id="hist-pesq" src="/static/graphs/pesq.png" width="400">
+            <img id="hist-stoi" src="/static/graphs/stoi.png" width="400">
+            <img id="hist-estoi" src="/static/graphs/estoi.png" width="400">
+        </div>
+    </div>
+</body>
+</html>

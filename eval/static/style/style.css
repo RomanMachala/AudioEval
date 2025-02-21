@@ -1,0 +1,37 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+.results {
+    margin-top: 20px;
+}
+.results table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.results table, .results th, .results td {
+    border: 1px solid #ddd;
+}
+.results th, .results td {
+    padding: 8px;
+    text-align: left;
+}
+.results th {
+    background-color: #f2f2f2;
+}
