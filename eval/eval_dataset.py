@@ -27,10 +27,11 @@ from metrics.stoi import eval_stoi, eval_estoi, StoiEvaluationError
 from metrics.mcd import eval_mcd
 from plots.analysis import analysis
 from speechmos import dnsmos
-
+"""
 class EvaluationRequest(BaseModel):
     meta_file: str
     dataset_path: str
+"""
 
 class InvalidMetaFileValue(Exception):
     """Meta file contains an invalid value, skipping current line"""
@@ -224,41 +225,11 @@ def eval_audio(ref_audio: Audio, gen_audio: Audio):
     #TODO handle results
     #TODO handle exceptions
 
-def eval_dataset(meta: str, dataset_path: str = None):
-    """
-    Main function used for dataset evaluation
-
-    Params:
-        meta            : name of the meta file, please refer to readme
-                        for correct meta structure
-        dataset_path    : in case meta file contains relative paths 
-    """
-    results = {"status": "running", "progress": 0, "results": []}
-    save_results(results)
-    
-    with open(meta, "r") as f:
-        lines = f.readlines()
-    total = len(lines)
-    
-    for i, line in enumerate(lines):
-        try:
-            ref_audio, gen_audio = get_audios(line=line, dataset_path=dataset_path)
-            mcd, pesq, stoi, estoi = eval_audio(ref_audio=ref_audio, gen_audio=gen_audio)
-            result = {"file": line.strip(), "mcd": mcd, "pesq": pesq, "stoi": stoi, "estoi": estoi}
-        except Exception as e:
-            result = {"file": line.strip(), "error": str(e)}
-        
-        results["progress"] = float(f"{((i / total) * 100):.2f}")
-        results["results"].append(result)
-        save_results(results)
-        update_plots()
-    
-    results["status"] = "completed"
-    save_results(results)
-
+"""
 app = FastAPI()
 RESULTS_FILE = "results.json"
 GRAPHS_PATH = 'static/graphs'
+
 
 def save_results(data):
     with open(RESULTS_FILE, "w") as f:
@@ -308,8 +279,7 @@ def get_results():
 @app.get("/")
 async def read_index():
     return FileResponse("index.html")
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
+"""
 
 # For testing and showcasing purposes only
 if __name__ == "__main__":

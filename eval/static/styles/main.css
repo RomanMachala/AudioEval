@@ -174,3 +174,11 @@ p {
     color: #ced4da;
     width: 60%;
 }
+
+#evaluation {
+    display: none;
+}
+
+.analysis-section {
+    display: none;
+}

@@ -12,11 +12,20 @@ async function startEvaluation() {
 
     const data = await response.json();
     alert(data.message);
-
+    showResults()
     // Poll for results every 10 seconds
     setInterval(fetchResults, 10000);
-    setInterval(refreshGraphs, 10000);
+    //setInterval(refreshGraphs, 10000);
 }
+
+function showResults(){
+    const selection = document.getElementById("container")
+    selection.style.display = "none"
+
+    const results = document.getElementById("evaluation")
+    results.style.display = "block"
+}
+
 
 function refreshGraphs() {
     document.getElementById("hist-mcd").src = "/static/graphs/mcd.png?" + new Date().getTime();

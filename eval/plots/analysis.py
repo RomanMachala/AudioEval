@@ -8,5 +8,5 @@ def analysis(data: pd.DataFrame, metric: str, save_path: str):
     plt.title(f'Rozložení hodnot {metric}')
     plt.xlabel(f'{metric}')
     plt.ylabel("Počet vzorků")
-    plt.savefig(f'{os.path.join(save_path, f'{metric}.png')}')
+    plt.savefig(save_path)
     plt.close()

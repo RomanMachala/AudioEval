@@ -1,0 +1,15 @@
+fastapi
+numpy
+pandas
+seaborn
+scipy
+librosa
+fastdtw
+pysptk
+speechmos
+pesq
+pystoi
+uvicorn
+setuptools
+onnxruntime
+python-multipart
