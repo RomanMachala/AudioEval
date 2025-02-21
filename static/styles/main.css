@@ -1,0 +1,176 @@
+/**
+*
+* Definice vzhledu pro registracni/logovaci stranku
+* Autor: Roman Machala (xmacha86)
+* Datum: 07.10.2024
+*
+*/
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f6f5f7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #caf0f8;
+    background: linear-gradient(to right, white, #caf0f8);
+}
+
+.container {
+    width: 70%;
+    height: 50%;
+    position: relative;
+    overflow: hidden;
+    background-color: white;
+    border-radius: 100px 50px 100px 50px;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+}
+
+.form-container {
+    position: absolute;
+    height: 100%;
+    width: 50%;
+    top: 0;
+    padding: 25px;
+    transition: transform 0.6s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+form input {
+    margin: 5px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background-color: #edede9;
+    width: 60%;
+}
+
+.eval-form {
+    left: 0;
+    z-index: 2;
+}
+
+.analysis-form {
+    right: 0;
+    transform: translateX(100%);
+    z-index: 1;
+}
+
+.cover-container {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 100%;
+    z-index: 100;
+}
+
+.cover {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    border-radius: 30px;
+}
+
+.cover-panel {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: #48cae4;
+    border-radius: 100px 50px 100px 50px;
+}
+.cover-value {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 60%;
+}
+
+.cover-left {
+    transform: translateX(-100%);
+    visibility: hidden;
+}
+
+.cover-right {
+    right: 0;
+    transform: translateX(0);
+}
+
+.cover-panel p {
+    display: block;
+    height: 30%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container.right-panel-active .eval-form {
+    transform: translateX(100%);
+}
+
+.container.right-panel-active .analysis-form {
+    transform: translateX(-100%);
+}
+
+.container.right-panel-active .cover {
+    transform: translateX(100%);
+}
+.container.right-panel-active .cover-right{
+    visibility: hidden;
+}
+.container.right-panel-active .cover-left {
+    visibility: visible;
+}
+
+.eval-form button, .analysis-form button {
+    background: #dee2e6;
+    border: 1px #dee2e6 solid;
+    width: 30%;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.eval-form button:hover, .analysis-form button:hover {
+    background: #adb5bd;
+}
+
+#analysis-button, #eval-button {
+    border: 1px #dee2e6 solid;
+    border-radius: 15px;
+    width: 20%;
+    padding: 10px;
+    margin-top: 15%;
+    background-color: #20afcc;
+}
+
+#analysis-button:hover, #eval-button:hover {
+
+}
+
+p {
+    margin-top: 10%;
+    color: #ced4da;
+    width: 60%;
+}

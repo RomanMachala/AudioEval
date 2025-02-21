@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="static/styles/main.css">
+
+        <title>Audio evaluation tool</title>
+    </head>
+    <body>
+        <div class="container" id="container">
+            <div class="form-container eval-form">
+                <form>
+                    <input type="text" placeholder="Meta file path">
+                    <input type="text" placeholder="Dataset path">
+                    <button>Start evaluation</button>
+                </form>
+                <p>
+                    Please input your meta file and dataset path above.
+                </p>
+            </div>
+            <div class="form-container analysis-form">
+                <form action="">
+                    <input type="file" placeholder="">
+                </form>
+                <p>
+                    Please select your configuration file you would like to see the analysis of.
+                </p>
+            </div>
+    
+            <div class="cover-container">
+                <div class="cover">
+                    <div class="cover-panel cover-right">
+                        <div class="cover-value">
+                            If you have already performed an evalutaion and would like to see results, click below.
+                            <button id="analysis-button">Analysis</button>
+                        </div>
+                    </div>
+                    <div class="cover-panel cover-left">
+                        <div class="cover-value">
+                            If you want to perform a new evaluation click below.
+                            <button id="eval-button">Evalutaion</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <script src="static/js/select.js"></script>
+    </body>
+</html>
