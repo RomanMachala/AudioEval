@@ -51,7 +51,6 @@ document.getElementById("upload-form").addEventListener("submit", async function
     }
 });
 
-/* 📊 Dynamické zobrazení grafů ve správných sekcích */
 function displayGraphs(graphs) {
     for (const [metric, paths] of Object.entries(graphs)) {
         let section = document.getElementById(`${metric}-section`).querySelector(".charts-container");

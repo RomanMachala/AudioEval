@@ -1,97 +1,200 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="static/styles/main.css">
 
-        <title>Audio evaluation tool</title>
-    </head>
-    <body>
-        <div class="container" id="container">
-            <div class="form-container eval-form">
-                <form>
-                    <input type="text" id="meta-file" placeholder="Meta file path">
-                    <input type="text" id="dataset-path" placeholder="Dataset path">
-                    <button type="button" onclick="startEvaluation()">Start evaluation</button>
-                </form>
-                <p>
-                    Please input your meta file and dataset path above.
-                </p>
-            </div>
-            <div class="form-container analysis-form">
-                <form id="upload-form">
-                    <input type="file" id="file-input" multiple>
-                    <button  type="submit">Upload</button>
-                </form>
-                <p>
-                    Please select your configuration file you would like to see the analysis of.
-                </p>
-            </div>
-    
-            <div class="cover-container">
-                <div class="cover">
-                    <div class="cover-panel cover-right">
-                        <div class="cover-value">
-                            If you have already performed an evalutaion and would like to see results, click below.
-                            <button id="analysis-button">Analysis</button>
-                        </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="static/styles/main.css">
+
+    <title>Audio evaluation tool</title>
+</head>
+
+<body>
+    <div class="container" id="container">
+        <div class="form-container eval-form">
+            <form>
+                <input type="text" id="meta-file" placeholder="Meta file path">
+                <input type="text" id="dataset-path" placeholder="Dataset path">
+                <button type="button" onclick="startEvaluation()">Start evaluation</button>
+            </form>
+            <p>
+                Please input your meta file and dataset path above.
+            </p>
+        </div>
+        <div class="form-container analysis-form">
+            <form id="upload-form">
+                <input type="file" id="file-input" multiple>
+                <button type="submit">Upload</button>
+            </form>
+            <p>
+                Please select your configuration file you would like to see the analysis of.
+            </p>
+        </div>
+
+        <div class="cover-container">
+            <div class="cover">
+                <div class="cover-panel cover-right">
+                    <div class="cover-value">
+                        If you have already performed an evalutaion and would like to see results, click below.
+                        <button id="analysis-button">Analysis</button>
                     </div>
-                    <div class="cover-panel cover-left">
-                        <div class="cover-value">
-                            If you want to perform a new evaluation click below.
-                            <button id="eval-button">Evalutaion</button>
-                        </div>
+                </div>
+                <div class="cover-panel cover-left">
+                    <div class="cover-value">
+                        If you want to perform a new evaluation click below.
+                        <button id="eval-button">Evalutaion</button>
                     </div>
                 </div>
             </div>
         </div>
-        <div id="evaluation">
-            <div class="results">
-                <h2>Results</h2>
-                <span id="progress">0%</span>
-                <table id="results-table">
-                    <thead>
-                        <tr>
-                            <th>File</th>
-                            <th>MCD</th>
-                            <th>PESQ</th>
-                            <th>STOI</th>
-                            <th>ESTOI</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Results will be populated here -->
-                    </tbody>
-                </table>
-            </div>
+    </div>
+    <div id="evaluation">
+        <div class="results">
+            <h2>Results</h2>
+            <span id="progress">0%</span>
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>MCD</th>
+                        <th>PESQ</th>
+                        <th>STOI</th>
+                        <th>ESTOI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Results will be populated here -->
+                </tbody>
+            </table>
         </div>
-        <div class="analysis-section">
+    </div>
+    <div class="analysis-section">
+        <div class="analysis-container">
             <h2>Analysis Results</h2>
             <div id="upload-status"></div>
-            <div id="pesq-section" class="metric-section">
-                <h3>PESQ</h3>
-                <div class="charts-container"></div>
+            <div class="graphs-section">
+                <div id="pesq-section" class="metric-section">
+                    <h3 class="metric-section-header">PESQ</h3>
+                    <div class="metric-section-container">
+                        <div class="charts-container">
+                        </div>
+                        <div class="metric-about">
+                            <p>
+                                PESQ (<i>Perceptual Evaluation of Speech Quality</i>) is a objective method used to
+                                measure audio quality, especially in telecommunicational
+                                systems and speech codecs. It is used to assess a speech quality after compression,
+                                transfer or other adjustments. This metrics compares a original
+                                (<i>reference</i>) signal with a output (<i>degraded</i>) one. The result of this metric
+                                is a <b>PESQ score</b> indicating a worsened quality of degraded speech
+                                with comparison to the reference one. In this scenario, PESQ is used to measure quality
+                                of a generated audio with regard to the reference one used as an input
+                                for TTS system.
+                            </p>
+                            <p>
+                                The output of this metric ranges from <b>-0.5</b> to <b>4.5</b>, where higher value
+                                means better quality.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div id="stoi-section" class="metric-section">
+                    <h3 class="metric-section-header">STOI</h3>
+                    <div class="metric-section-container">
+                        <div class="charts-container">
+                        </div>
+                        <div class="metric-about">
+                            <p>
+                                STOI (<i>Short-Time Objective Intelligibility</i>) is a objective method used to measure
+                                intelligibility. It is primarily used
+                                to assess audio quality after speech processing such as speech codecs, VoIP or
+                                algorithms for noise suppression. The STOI metrics
+                                compares an original (<i>reference</i>) audio to a output (<i>degraded</i>) one,
+                                providing <b>STOI score</b>. In this scenario
+                                STOI metric is used to measure speech intelligibility of a degraded (<i>generated</i>)
+                                one with regard to the original one used as an input
+                                for TTS system.
+                            </p>
+                            <p>
+                                The output of this metric ranges from <b>0</b> to <b>1</b>, where higher value means
+                                better intelligibility.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div id="estoi-section" class="metric-section">
+                    <h3 class="metric-section-header">ESTOI</h3>
+                    <div class="metric-section-container">
+                        <div class="charts-container">
+                        </div>
+                        <div class="metric-about">
+                            <p>
+                                ESTOI (<i>Extended Short-Time Objective Intelligibility</i>) is a objective method used
+                                to measure intelligibility. ESTOI is an extended version of STOI, providing
+                                accurate results when it comes to heavily degraded audio or generally audio containing
+                                noise. ESTOI was also designed to better mimic human-like
+                                speech perceiving. The scnario is the same as for metric STOI in this use-case.
+                            </p>
+                            <p>
+                                The output of this metric ranges from <b>0</b> to <b>1</b>, where higher value means
+                                better intelligibility.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div id="mcd-section" class="metric-section">
+                    <h3 class="metric-section-header">MCD</h3>
+                    <div class="metric-section-container">
+                        <div class="charts-container">
+                        </div>
+                        <div class="metric-about">
+                            <p>
+                                MCD (<i>Mel-Cepstral Distortion</i>) is a metric used to measure a differrence of two
+                                speech signals based on their
+                                MFCC (<i>Mel-Cepstral Coefficients</i>). MCD is widely used in assessing quality of
+                                synthesized speech, for example in training a TTS model or
+                                in voice conversion.
+                            </p>
+                            <p>
+                                The output of this can be interpreted in a way where smaller values means better
+                                quality. For example <b>4 - 6</b> would mean almost
+                                indistinquishable synthesized speech from a human-like one.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div id="mos-section" class="metric-section">
+                    <h3 class="metric-section-header">MOS</h3>
+                    <div class="metric-section-container">
+                        <div class="charts-container">
+                        </div>
+                        <div class="metric-about">
+                            <p>
+                                MOS (<i>Mean Opinion Score</i>) is one of the most used metric when it comes to audio
+                                quality assessment. Originally MOS is a subjective method
+                                requiring proffesional listeners to assess audio quality on a scale from <b>1</b> to
+                                <b>5</b>, where higher value means better quality.
+                                In this project a NN (<i>Neural Networks</i>) model is used to predict MOS score of a
+                                audio that would have been assigned to said audio by human
+                                listeners.
+                            </p>
+                            <p>
+                                MOS ranges from <b>1</b> to <b>5</b>, where higher value means better quality.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="stoi-section" class="metric-section">
-                <h3>STOI</h3>
-                <div class="charts-container"></div>
+            <div class="about">
+                <p>
+                    ABOUT TODO
+                </p>
             </div>
-            <div id="estoi-section" class="metric-section">
-                <h3>eSTOI</h3>
-                <div class="charts-container"></div>
-            </div>
-            <div id="mcd-section" class="metric-section">
-                <h3>MCD</h3>
-                <div class="charts-container"></div>
-            </div>
-            <div id="mos-section" class="metric-section">
-                <h3>MOS</h3>
-                <div class="charts-container"></div>
-            </div>
-        </div>        
+        </div>
+    </div>
     <script src="static/js/select.js"></script>
     <script src="static/js/handleEval.js"></script>
     <script src="static/js/handleAnalysis.js"></script>
-    </body>
+    <script src="static/js/analysis.js"></script>
+</body>
+
 </html>
