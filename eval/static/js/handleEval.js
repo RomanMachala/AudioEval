@@ -1,64 +1,43 @@
-async function startEvaluation() {
-    const metaFile = document.getElementById('meta-file').value;
-    const datasetPath = document.getElementById('dataset-path').value;
+function startEvaluation() {
+    const metaFile = document.getElementById("meta-file").value;
+    const datasetPath = document.getElementById("dataset-path").value;
 
-    try {
-        const response = await fetch('/start-evaluation/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ meta_file: metaFile, dataset_path: datasetPath }),
-        });
+    if (!metaFile || !datasetPath) {
+        alert("Please enter both meta file path and dataset path.");
+        return;
+    }
 
-        if (!response.ok) {
-            logMessage(`❌ Error: ${response.status} - ${response.statusText}`);
-            return;
+    fetch("/start-evaluation/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ meta_file: metaFile, dataset_path: datasetPath })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === "Evaluation started") {
+            document.getElementById("evaluation").style.display = "block"; // Zobrazí celý evaluation blok
+            document.getElementById("container").style.display = "none";
+            startLogStream(); // Spustí streamování logů
+        } else {
+            alert(data.message);
         }
-
-        const data = await response.json();
-        logMessage("✅ === Starting evaluation... ===");
-        logMessage(`📂 Meta file: ${metaFile}`);
-        logMessage(`📁 Dataset path: ${datasetPath}`);
-
-        // Skrytí výběrového formuláře a zobrazení logovacího okna
-        document.getElementById("container").style.display = "none";
-        document.getElementById("evaluation").style.display = "block";
-
-        alert(data.message);
-        setInterval(fetchResults, 5000); // Každých 5s kontrolovat progress
-
-    } catch (error) {
-        console.error("Error fetching evaluation:", error);
-        logMessage("❌ Failed to start evaluation.");
-    }
+    })
+    .catch(error => console.error("Error:", error));
 }
 
-async function fetchResults() {
-    const response = await fetch('/results/');
-    const data = await response.json();
+function startLogStream() {
+    const logOutput = document.getElementById("log-output");
+    logOutput.textContent = "";  // Vymaže předchozí logy
 
-    logMessage(`🔄 Progress: ${data.progress}%`);
+    const eventSource = new EventSource("/log-stream/");
+    eventSource.onmessage = function(event) {
+        logOutput.textContent += event.data + "\n";  // Přidá nový řádek logu
+        logOutput.scrollTop = logOutput.scrollHeight;  // Posun na konec logu
+    };
 
-    data.results.forEach(result => {
-        logMessage(
-            `📄 File: ${result.file}, MCD: ${result.mcd || "N/A"}, PESQ: ${result.pesq || "N/A"}, STOI: ${result.stoi || "N/A"}, ESTOI: ${result.estoi || "N/A"}`
-        );
-    });
-
-    if (data.progress >= 100) {
-        logMessage("🎉 Evaluation complete!");
-    }
+    eventSource.onerror = function() {
+        console.error("Log stream disconnected.");
+        eventSource.close();
+    };
 }
 
-function logMessage(message) {
-    const logDiv = document.getElementById("log-output");
-    if (!logDiv) return;
-
-    const logEntry = document.createElement("p");
-    logEntry.textContent = message;
-    logDiv.appendChild(logEntry);
-
-    // Auto-scroll dolů
-    logDiv.scrollTop = logDiv.scrollHeight;
-}

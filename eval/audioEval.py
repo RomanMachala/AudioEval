@@ -8,6 +8,8 @@ import pandas as pd
 from plots.analysis import analysis
 from eval_dataset import get_audios, eval_audio
 import numpy as np
+import time
+import asyncio
 
 class EvaluationRequest(BaseModel):
     meta_file: str
@@ -37,7 +39,7 @@ def load_results():
     return {"status": "idle", "progress": 0, "results": []}
 
 @app.post("/start-evaluation/")
-def start_evaluation(request: EvaluationRequest, background_tasks: BackgroundTasks):
+async def start_evaluation(request: EvaluationRequest, background_tasks: BackgroundTasks):
     meta_file = request.meta_file
     dataset_path = request.dataset_path
 
@@ -46,7 +48,7 @@ def start_evaluation(request: EvaluationRequest, background_tasks: BackgroundTas
     if not os.path.exists(dataset_path):
         return JSONResponse(content={"message": "Selected dataset path doesn't exist"}, status_code=400)
 
-    background_tasks.add_task(eval_dataset, meta_file, dataset_path)
+    background_tasks.add_task(eval_dataset, meta_file, dataset_path, True)
 
     return JSONResponse(content={"message": "Evaluation started"}, status_code=200)
 
@@ -96,7 +98,7 @@ async def process_files():
                     plot_path = os.path.join(GRAPHS_PATH, f'{file_name}_{metric}.png')
                     analysis(data, metric, plot_path, file_name)
                     web_path = plot_path.replace("static" + os.sep, "/static/")
-                    web_path = web_path.replace("\\", "/")  # Převod na webový formát
+                    web_path = web_path.replace("\\", "/")
 
                     generated_plots[metric].append(web_path)
         except ValueError:
@@ -106,35 +108,24 @@ async def process_files():
         return JSONResponse(status_code=400, content={"error": "No valid file was processed."})
     return {"generated_plots": generated_plots}
 
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-def eval_dataset(meta: str, dataset_path: str = None, log_callback=None):
+def eval_dataset(meta: str, dataset_path: str = None, web_mode=False):
     """
-    Main function used for dataset evaluation
-
-    Params:
-        meta            : name of the meta file
-        dataset_path    : path to dataset (optional)
-        log_callback    : function for logging (optional)
     """
-    def log(message):
-        if log_callback:
-            log_callback(message)  # Pokud existuje callback, voláme ho
-        else:
-            print(message)  # Jinak tiskneme do konzole
-
-    log("Starting evaluation for files in: " + meta)
-    results = {"status": "running", "progress": 0, "results": []}
-    save_results(results)
+    log_event("Evaluation started.", web_mode)
 
     with open(meta, "r") as f:
         lines = f.readlines()
     total = len(lines)
 
+    results_data = {
+        "status": "running",
+        "progress": 0,
+        "results": []
+    }
+    save_results(results_data)
     for i, line in enumerate(lines):
         try:
-            log(f"Processing file {i+1}/{total}: {line.strip()}")
+            log_event(f"Evaluating file: {line.strip()}", web_mode)
             ref_audio, gen_audio = get_audios(line=line, dataset_path=dataset_path)
             mcd, pesq, stoi, estoi, mos = eval_audio(ref_audio=ref_audio, gen_audio=gen_audio)
 
@@ -146,25 +137,48 @@ def eval_dataset(meta: str, dataset_path: str = None, log_callback=None):
                 "Estoi": float(estoi),
                 "Mos": convert(mos)
             }
-
-            log(f"Results for {line.strip()} -> PESQ: {pesq}, STOI: {stoi}, ESTOI: {estoi}, MCD: {mcd}, MOS: {mos}")
+            log_event(f"Evaluatin of files: {line.strip()} done", web_mode)
+            log_event(f"mcd: {mcd}, Pesq: {pesq}, Stoi: {stoi}, Estoi: {estoi}, MOS: {mos}", web_mode)
+            log_event(f"", web_mode)
+            results_data["results"].append(result)
+            results_data["progress"] = int(((i + 1) / total) * 100)
+            save_results(results_data)
 
         except Exception as e:
-            log(f"Error processing {line.strip()}: {e}")
+            log_event(f"Error evaluating {line.strip()}: {str(e)}", web_mode)
             continue
 
-        results["progress"] = float(f"{((i / total) * 100):.2f}")
-        results["results"].append(result)
-        save_results(results)
+    results_data["status"] = "completed"
+    results_data["progress"] = 100
+    save_results(results_data)
 
-    log("Evaluation completed!")
+    log_event("Evaluation completed.", web_mode)
 
-@app.get("/results/")
-def get_results():
-    if not os.path.exists(RESULTS_FILE):
-        return {"status": "not started", "progress": 0, "results": []}
 
-    with open(RESULTS_FILE, "r") as f:
-        results = json.load(f)
+log_messages = []
 
-    return results
+def log_event(message, web_mode=False):
+
+    if web_mode:
+        global log_messages
+        log_messages.append(message)
+        if len(log_messages) > 100:
+            log_messages.pop(0)
+    else:
+        print(message)
+
+async def log_generator():
+    last_log_index = 0
+    while True:
+        if last_log_index < len(log_messages):
+            for log in log_messages[last_log_index:]:
+                yield f"data: {log}\n\n"
+            last_log_index = len(log_messages)
+
+        await asyncio.sleep(1)
+
+@app.get("/log-stream/")
+async def stream_logs():
+    return StreamingResponse(log_generator(), media_type="text/event-stream")
+
+app.mount("/static", StaticFiles(directory="static"), name="static")

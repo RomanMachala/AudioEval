@@ -70,6 +70,7 @@ class Audio:
             orig_sr=self.rate,
             target_sr=new_sr
         )
+    
     def normalize(self) -> np.ndarray:
         if self.audio.dtype == np.int16:
             return self.audio.astype(np.float32) / 32768.0
@@ -106,13 +107,12 @@ class Audio:
         
         x = x.astype(np.float64)
 
-        # Rámcování a okno
         frames = librosa.util.frame(x, frame_length=frame_length, hop_length=hop_length).astype(np.float64).T
         frames *= pysptk.blackman(frame_length)
         if frames.shape[1] != frame_length:
             raise InvalidFrameLength
 
-        gamma = -1.0 / stage  # Např. -0.2 pro stage=5
+        gamma = -1.0 / stage
 
         try:
             mgc = pysptk.mgcep(frames, order, alpha, gamma)
@@ -233,65 +233,3 @@ def eval_audio(ref_audio: Audio, gen_audio: Audio):
     return mcd, pesq, stoi, estoi, mos
     #TODO handle results
     #TODO handle exceptions
-
-"""
-app = FastAPI()
-RESULTS_FILE = "results.json"
-GRAPHS_PATH = 'static/graphs'
-
-
-def save_results(data):
-    with open(RESULTS_FILE, "w") as f:
-        json.dump(data, f, indent=4)
-
-def load_results():
-    if os.path.exists(RESULTS_FILE):
-        with open(RESULTS_FILE, "r") as f:
-            return json.load(f)
-    return {"status": "idle", "progress": 0, "results": []}
-
-
-
-@app.post("/start-evaluation/")
-def start_evaluation(request: EvaluationRequest, background_tasks: BackgroundTasks):
-    # Extracting values from the body
-    meta_file = request.meta_file
-    dataset_path = request.dataset_path
-
-    #Checks whether input values are valid
-    if not os.path.exists(meta_file):
-        return {"message": "Selected meta file doesn't exist"}
-    if not os.path.exists(dataset_path):
-        return {"message": "Selected dataset path doesn't exist"}
-
-
-    # Adding the background task if values are valid
-    background_tasks.add_task(eval_dataset, meta_file, dataset_path)
-
-    return {"message": "Evaluation started"} # Info about starting the eval
-
-
-def update_plots():
-    
-    with open(RESULTS_FILE, "r") as f:
-        results = json.load(f)
-    
-        df = pd.DataFrame(results['results'])
-        for metric in ["mcd", "pesq", "stoi", "estoi"]:
-            if metric in df.columns:
-                analysis(df, metric, GRAPHS_PATH)
-
-@app.get("/results/")
-def get_results():
-    return load_results()
-
-@app.get("/")
-async def read_index():
-    return FileResponse("index.html")
-"""
-
-# For testing and showcasing purposes only
-if __name__ == "__main__":
-    pass
-    # evaluating dataset using specific meta file with specified dataset path
-    # eval_dataset(meta='meta', dataset_path='../../../../generated/ov_libritts_v1')
