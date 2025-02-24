@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 def analysis(data: pd.DataFrame, metric: str, save_path: str):
-    sns.histplot(data[metric], kde=True, bins=20)
+    sns.histplot(data[metric] if metric != 'mos' else data[metric].apply(pd.Series), kde=True, bins=20)
     plt.title(f'Rozložení hodnot {metric}')
     plt.xlabel(f'{metric}')
     plt.ylabel("Počet vzorků")

@@ -7,6 +7,7 @@ import os
 import pandas as pd
 from plots.analysis import analysis
 from eval_dataset import get_audios, eval_audio
+import numpy as np
 
 class EvaluationRequest(BaseModel):
     meta_file: str
@@ -18,8 +19,18 @@ GRAPHS_PATH     = 'static/graphs'
 UPLOAD_PATH     = 'uploads'
 
 def save_results(data):
+    """Uloží data do JSON a zajistí správný formát čísel"""
     with open(RESULTS_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f, indent=4, default=convert)
+
+def convert(obj):
+    """Pomocná funkce pro převod numpy typů na běžné Python datové typy"""
+    if isinstance(obj, (np.float32, np.float64, np.int32, np.int64)):
+        return obj.item()  # Převod na běžný `float` nebo `int`
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()  # Převod pole na list
+    return obj  # Pokud není numpy objekt, vrátíme původní hodnotu
+
 
 def load_results():
     if os.path.exists(RESULTS_FILE):
@@ -138,10 +149,18 @@ def eval_dataset(meta: str, dataset_path: str = None):
     for i, line in enumerate(lines):
         try:
             ref_audio, gen_audio = get_audios(line=line, dataset_path=dataset_path)
-            mcd, pesq, stoi, estoi = eval_audio(ref_audio=ref_audio, gen_audio=gen_audio)
-            result = {"file": line.strip(), "mcd": mcd, "pesq": pesq, "stoi": stoi, "estoi": estoi}
+            mcd, pesq, stoi, estoi, mos = eval_audio(ref_audio=ref_audio, gen_audio=gen_audio)
+            result = {
+                "file": line.strip(),
+                "mcd": float(mcd),  # Převod numpy.float32 na float
+                "pesq": float(pesq),
+                "stoi": float(stoi),
+                "estoi": float(estoi),
+                "mos": convert(mos)  # Použijeme `convert()` pro bezpečný převod
+            }
         except Exception as e:
-            result = {"file": line.strip(), "error": str(e)}
+            print(e)
+            continue
         
         results["progress"] = float(f"{((i / total) * 100):.2f}")
         results["results"].append(result)

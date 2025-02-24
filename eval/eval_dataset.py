@@ -70,6 +70,15 @@ class Audio:
             orig_sr=self.rate,
             target_sr=new_sr
         )
+    def normalize(self) -> np.ndarray:
+        if self.audio.dtype == np.int16:
+            return self.audio.astype(np.float32) / 32768.0
+        elif self.audio.dtype == np.int32:
+            return self.audio.astype(np.float32) / 2147483648.0
+        elif self.audio.dtype == np.uint8:
+            return (self.audio.astype(np.float32) - 128) / 128.0
+        else:
+            return self.audio.astype(np.float32)
 
     def extract_mgc(self, frame_length=512, hop_length=128, order=24, alpha=0.35, stage=5):
         """
@@ -215,13 +224,13 @@ def eval_audio(ref_audio: Audio, gen_audio: Audio):
     except StoiEvaluationError as e:
         estoi = "NaN"
     try:
-        mos = dnsmos.run(gen_audio.audio, 16000)
+        mos = dnsmos.run(gen_audio.normalize(), 16000)
     except Exception as e:
         print(e)
         mos = "NaN"
 
     print (mcd, pesq, stoi, estoi, mos)
-    return mcd, pesq, stoi, estoi
+    return mcd, pesq, stoi, estoi, mos
     #TODO handle results
     #TODO handle exceptions
 
