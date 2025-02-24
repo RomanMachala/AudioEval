@@ -2,62 +2,63 @@ async function startEvaluation() {
     const metaFile = document.getElementById('meta-file').value;
     const datasetPath = document.getElementById('dataset-path').value;
 
-    const response = await fetch('/start-evaluation/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ meta_file: metaFile, dataset_path: datasetPath }),
-    });
+    try {
+        const response = await fetch('/start-evaluation/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ meta_file: metaFile, dataset_path: datasetPath }),
+        });
 
-    const data = await response.json();
-    alert(data.message);
-    showResults()
-    // Poll for results every 10 seconds
-    setInterval(fetchResults, 10000);
-    //setInterval(refreshGraphs, 10000);
+        if (!response.ok) {
+            logMessage(`❌ Error: ${response.status} - ${response.statusText}`);
+            return;
+        }
+
+        const data = await response.json();
+        logMessage("✅ === Starting evaluation... ===");
+        logMessage(`📂 Meta file: ${metaFile}`);
+        logMessage(`📁 Dataset path: ${datasetPath}`);
+
+        // Skrytí výběrového formuláře a zobrazení logovacího okna
+        document.getElementById("container").style.display = "none";
+        document.getElementById("evaluation").style.display = "block";
+
+        alert(data.message);
+        setInterval(fetchResults, 5000); // Každých 5s kontrolovat progress
+
+    } catch (error) {
+        console.error("Error fetching evaluation:", error);
+        logMessage("❌ Failed to start evaluation.");
+    }
 }
-
-function showResults(){
-    const selection = document.getElementById("container")
-    selection.style.display = "none"
-
-    const results = document.getElementById("evaluation")
-    results.style.display = "block"
-}
-
-
-function refreshGraphs() {
-    document.getElementById("hist-mcd").src = "/static/graphs/mcd.png?" + new Date().getTime();
-    document.getElementById("hist-pesq").src = "/static/graphs/pesq.png?" + new Date().getTime();
-    document.getElementById("hist-stoi").src = "/static/graphs/stoi.png?" + new Date().getTime();
-    document.getElementById("hist-estoi").src = "/static/graphs/estoi.png?" + new Date().getTime();
-}
-
-// Spustí se každých 5 sekund a aktualizuje obrázky
-
-
 
 async function fetchResults() {
     const response = await fetch('/results/');
     const data = await response.json();
 
-    const tableBody = document.querySelector('#results-table tbody');
-    tableBody.innerHTML = ''; // Clear existing rows
-
-    const progressVal = document.getElementById("progress");
-    progressVal.textContent = data.progress + "%/100%";    
+    logMessage(`🔄 Progress: ${data.progress}%`);
 
     data.results.forEach(result => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${result.file}</td>
-            <td>${result.mcd || result.error || ''}</td>
-            <td>${result.pesq || result.error || ''}</td>
-            <td>${result.stoi || result.error || ''}</td>
-            <td>${result.estoi || result.error || ''}</td>
-        `;
-        tableBody.appendChild(row);
+        logMessage(
+            `📄 File: ${result.file}, MCD: ${result.mcd || "N/A"}, PESQ: ${result.pesq || "N/A"}, STOI: ${result.stoi || "N/A"}, ESTOI: ${result.estoi || "N/A"}`
+        );
     });
+
+    if (data.progress >= 100) {
+        logMessage("🎉 Evaluation complete!");
+    }
 }
 
+function logMessage(message) {
+    const logDiv = document.getElementById("log-output");
+    if (!logDiv) return;
+
+    const logEntry = document.createElement("p");
+    logEntry.textContent = message;
+    logDiv.appendChild(logEntry);
+
+    // Auto-scroll dolů
+    logDiv.scrollTop = logDiv.scrollHeight;
+}

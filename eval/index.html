@@ -50,30 +50,20 @@
     </div>
     <div id="evaluation">
         <div class="results">
-            <h2>Results</h2>
+            <h2>Evaluation Progress</h2>
             <span id="progress">0%</span>
-            <table id="results-table">
-                <thead>
-                    <tr>
-                        <th>File</th>
-                        <th>MCD</th>
-                        <th>PESQ</th>
-                        <th>STOI</th>
-                        <th>ESTOI</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Results will be populated here -->
-                </tbody>
-            </table>
+    
+            <div id="log-container">
+                <pre id="log-output"></pre>
+            </div>
         </div>
-    </div>
+    </div>    
     <div class="analysis-section">
         <div class="analysis-container">
             <h2>Analysis Results</h2>
             <div id="upload-status"></div>
             <div class="graphs-section">
-                <div id="pesq-section" class="metric-section">
+                <div id="Pesq-section" class="metric-section">
                     <h3 class="metric-section-header">PESQ</h3>
                     <div class="metric-section-container">
                         <div class="charts-container">
@@ -97,7 +87,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="stoi-section" class="metric-section">
+                <div id="Stoi-section" class="metric-section">
                     <h3 class="metric-section-header">STOI</h3>
                     <div class="metric-section-container">
                         <div class="charts-container">
@@ -121,7 +111,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="estoi-section" class="metric-section">
+                <div id="Estoi-section" class="metric-section">
                     <h3 class="metric-section-header">ESTOI</h3>
                     <div class="metric-section-container">
                         <div class="charts-container">
@@ -141,7 +131,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="mcd-section" class="metric-section">
+                <div id="Mcd-section" class="metric-section">
                     <h3 class="metric-section-header">MCD</h3>
                     <div class="metric-section-container">
                         <div class="charts-container">
@@ -162,7 +152,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="mos-section" class="metric-section">
+                <div id="Mos-section" class="metric-section">
                     <h3 class="metric-section-header">MOS</h3>
                     <div class="metric-section-container">
                         <div class="charts-container">
@@ -183,6 +173,9 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="analysis-back">
+                <button type="button" id="back-button" onclick="goBackToSelect()">Back to analysis</button>
             </div>
             <div class="about">
                 <p>

@@ -65,3 +65,18 @@ function displayGraphs(graphs) {
         });
     }
 }
+
+function goBackToSelect() {
+    console.log("Back button clicked!");
+
+    let container = document.querySelector("#container");
+    let analysisSection = document.querySelector(".analysis-section");
+
+    if (container && analysisSection) {
+        container.style.display = "block";
+        analysisSection.style.display = "none";
+    } else {
+        console.log("Error: container or analysis-section not found!");
+    }
+}
+

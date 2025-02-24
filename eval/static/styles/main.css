@@ -245,3 +245,15 @@ form input {
 .about {
     margin-top: 10%;
 }
+
+#log-container {
+    width: 100%;
+    height: 300px;
+    background: black;
+    color: limegreen;
+    font-family: monospace;
+    overflow-y: auto;
+    border: 1px solid gray;
+    padding: 10px;
+    margin-bottom: 20px;
+}
