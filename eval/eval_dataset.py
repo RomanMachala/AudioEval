@@ -8,9 +8,6 @@ __author__  = "Roman Machala"
 __date__    = "14.12.2024"
 __version__ = "0.1"
 
-from fastapi import FastAPI, BackgroundTasks
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import json
 import time
@@ -25,13 +22,6 @@ import os
 from metrics.pesq import eval_pesq, PesqEvaluationError
 from metrics.stoi import eval_stoi, eval_estoi, StoiEvaluationError
 from metrics.mcd import eval_mcd
-from plots.analysis import analysis
-from speechmos import dnsmos
-"""
-class EvaluationRequest(BaseModel):
-    meta_file: str
-    dataset_path: str
-"""
 
 class InvalidMetaFileValue(Exception):
     """Meta file contains an invalid value, skipping current line"""
