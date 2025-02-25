@@ -1,8 +1,9 @@
 /**
 *
-* Definice vzhledu pro registracni/logovaci stranku
-* Autor: Roman Machala (xmacha86)
-* Datum: 07.10.2024
+* Author: Roman Machala (xmacha86)
+* Date: 12.02.2025
+*
+* Contains main style definition for AudioEval tool
 *
 */
 * {
@@ -175,115 +176,6 @@ form input {
     width: 60%;
 }
 
-#evaluation {
-    display: none;
-    width: 100%;
-}
-
-.analysis-section {
-    height: 100%;
-    width: 100%;
-    display: none;
-}
-.analysis-container {
-    display: flex;
-    flex-direction: column;
-    justify-self: center;
-    align-items: center;
-    width: 90%;
-    overflow: auto;
-    margin-top: 10%;
-}
-.analysis-section h2 {
-    margin-bottom: 20px;
-    font-size: 30pt;
-}
-
-.graphs-section {
-    width: 80%;
-}
-
-.metric-section-header {
-    cursor: pointer;
-    padding: 10px;
-    background: #F4F6FF;
-    text-align: center;
-}
-
-.metric-section-header:hover {
-    background: #E4E0E1;
-}
-
-.metric-section-container {
-    overflow: hidden;
-    max-height: 0;
-    transition: max-height 0.4s ease-out, padding 0.4s ease-out;
-    display: flex;
-    flex-direction: column;
-    justify-self: center;
-    align-items: center;
-}
-
-.charts-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-.metric-about {
-    width: 90%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-.metric-about p {
-    padding: 20px;
-    text-align: center;
-    font-size: 24pt;
-}
-
 .about {
     margin-top: 10%;
-}
-
-#log-container {
-    width: 80%;
-    height: 50%;
-    background-color: #F1F0E9;
-    color: limegreen;
-    font-family: monospace;
-    overflow: auto;
-    border: 1px solid gray;
-    padding: 10px;
-    margin-bottom: 20px;
-}
-
-.results {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-}
-
-.results-header {
-    margin-bottom: 20px;
-}
-
-#progress {
-    margin-bottom: 20px;
-}
-
-#log-output {
-    height: 100%;
-    width: 100%;
-    overflow: auto;
-    font-size: 17pt;
-}
-
-#evaluation {
-    display: none;
-    width: 100%;
-    height: 100%;
 }

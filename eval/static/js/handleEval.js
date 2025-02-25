@@ -1,12 +1,32 @@
+/**
+ * 
+ * @author Roman Machala
+ * @date 18.05.2025
+ * @brief Script file responsible for evaluation logic handling
+ *          main functionality: handle evalaution submit form
+ *                              start evaluation with correct files
+ *                              handle and visualize evaluation progress
+ * 
+ */
+
+/**
+ * 
+ * @brief function responsible for evaluation starting
+ *          handles correctness of submited files and calls
+ *          evaluation function with presented files
+ * 
+ */
 function startEvaluation() {
     const metaFile = document.getElementById("meta-file").value;
     const datasetPath = document.getElementById("dataset-path").value;
+    /* Form values, presented file and dataset path */
 
+    /* If there were no values presented */
     if (!metaFile || !datasetPath) {
         alert("Please enter both meta file path and dataset path.");
         return;
     }
-
+    /* Else start evaluation */
     fetch("/start-evaluation/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -14,30 +34,42 @@ function startEvaluation() {
     })
     .then(response => response.json())
     .then(data => {
+        /* If evaluation has started correctly */
         if (data.message === "Evaluation started") {
-            document.getElementById("evaluation").style.display = "block"; // Zobrazí celý evaluation blok
+            /* Hide select container and show evaluation progress */
+            document.getElementById("evaluation").style.display = "block";
             document.getElementById("container").style.display = "none";
-            startLogStream(); // Spustí streamování logů
+            startLogStream(); /* Streaming of logs */
         } else {
+            /* If eval hasn't started correctly atleast let know */
             alert(data.message);
         }
     })
     .catch(error => console.error("Error:", error));
 }
 
+/**
+ * 
+ * @brief function responsible for handling streaming form server
+ * 
+ */
 function startLogStream() {
     const logOutput = document.getElementById("log-output");
-    logOutput.textContent = "";  // Vymaže předchozí logy
+    logOutput.textContent = ""; /* Delete previous logs */
 
+    /* Wait for incoming log messages */
     const eventSource = new EventSource("/log-stream/");
+    /* On new incoming message */
     eventSource.onmessage = function(event) {
-        logOutput.textContent += event.data + "\n";  // Přidá nový řádek logu
-        logOutput.scrollTop = logOutput.scrollHeight;  // Posun na konec logu
+        logOutput.textContent += event.data + "\n";
+        logOutput.scrollTop = logOutput.scrollHeight;
+        /* Append message to the "console" and scroll to last message */
     };
-
+    /* In case an error occures print to console */
     eventSource.onerror = function() {
         console.error("Log stream disconnected.");
         eventSource.close();
+        /* Close streaming source */
     };
 }
 
