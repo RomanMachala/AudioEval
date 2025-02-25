@@ -180,13 +180,6 @@ form input {
     width: 100%;
 }
 
-.results {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
 .analysis-section {
     height: 100%;
     width: 100%;
@@ -254,13 +247,43 @@ form input {
 }
 
 #log-container {
-    width: 100%;
+    width: 80%;
     height: 50%;
-    background: black;
+    background-color: #F1F0E9;
     color: limegreen;
     font-family: monospace;
-    overflow-y: auto;
+    overflow: auto;
     border: 1px solid gray;
     padding: 10px;
     margin-bottom: 20px;
+}
+
+.results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.results-header {
+    margin-bottom: 20px;
+}
+
+#progress {
+    margin-bottom: 20px;
+}
+
+#log-output {
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+    font-size: 17pt;
+}
+
+#evaluation {
+    display: none;
+    width: 100%;
+    height: 100%;
 }
