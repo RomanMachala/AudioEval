@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 def analysis(data: pd.DataFrame, metric: str, save_path: str, filename: str):
-    sns.histplot(data[metric] if metric != 'Mos' else data[metric].apply(pd.Series), kde=True, bins=20)
+    sns.histplot(data[metric] if metric != 'Mos' else data[metric].apply(pd.Series), kde=True, bins=40 if metric == 'Mos' else 20)
     plt.title(f'{filename}')
     plt.xlabel(f'{metric} score')
     plt.ylabel("Frequency")

@@ -189,7 +189,7 @@ def eval_dataset(meta: str, dataset_path: str = None, web_mode=False):
     for i, line in enumerate(lines):
         # For each line in meta file
         try:
-            log_event(f"{i}/{total} Evaluating file: {line.strip()}", web_mode)
+            log_event(f"{i + 1}/{total} Evaluating file: {line.strip()}", web_mode)
             # Gets reference and generated audio
             ref_audio, gen_audio = get_audios(line=line, dataset_path=dataset_path)
             # Gets evaluation
@@ -252,3 +252,8 @@ async def stream_logs():
     return StreamingResponse(log_generator(), media_type="text/event-stream")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+if __name__ == "__main__":
+    #FOR CLI EVALUATION ONLY 
+    #eval_dataset(TODO handle args)
+    pass

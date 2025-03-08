@@ -22,6 +22,7 @@ import os
 from metrics.pesq import eval_pesq, PesqEvaluationError
 from metrics.stoi import eval_stoi, eval_estoi, StoiEvaluationError
 from metrics.mcd import eval_mcd
+from speechmos import dnsmos
 
 class InvalidMetaFileValue(Exception):
     """Meta file contains an invalid value, skipping current line"""
@@ -72,21 +73,7 @@ class Audio:
             return self.audio.astype(np.float32)
 
     def extract_mgc(self, frame_length=512, hop_length=128, order=24, alpha=0.35, stage=5):
-        """
-        Extrahuje Mel-Generalized Cepstrum (MGC) koeficienty z instance `Audio`.
-
-        Args:
-            audio       : Instanci třídy `Audio` obsahující již načtené zvukové data.
-            frame_length: Délka rámce (výchozí 512).
-            hop_length  : Posun mezi rámci (výchozí 128).
-            order       : Počet MGC koeficientů (výchozí 24).
-            alpha       : Mel-scale parametr (výchozí 0.35 pro 16 kHz).
-            stage       : Gamma parametr (výchozí 5).
-
-        Returns:
-            mgc         : Matice MGC koeficientů (shape: [N_frames, order+1]).
-        """
-        # If invalid sample rate is presented, resample
+        # If invalid sample rate, resample
         if self.rate != 16000:
             try:
                 x = self.resample(16000)
@@ -221,5 +208,4 @@ def eval_audio(ref_audio: Audio, gen_audio: Audio):
 
     print (mcd, pesq, stoi, estoi, mos)
     return mcd, pesq, stoi, estoi, mos
-    #TODO handle results
     #TODO handle exceptions
