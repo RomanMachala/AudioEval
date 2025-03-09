@@ -9,6 +9,7 @@ from plots.analysis import analysis, table
 from eval_dataset import get_audios, eval_audio
 import numpy as np
 import asyncio
+import concurrent.futures
 
 class EvaluationRequest(BaseModel):
     """
@@ -219,6 +220,42 @@ async def get_tables():
     # Else returns dictionary containing generated graphs paths
     return {"tables": tables}
 
+def process_line(line, dataset_path, web_mode):
+    """
+        Function to evaluate audios specificated by line in meta file
+
+        Params:
+            line:           contains ref and gen audio path
+            dataset_path:   path to dataset
+            web_mode:       logging mode
+
+        Returns:
+            results of evaluation
+    """
+    try:
+        # Gets reference and generated audio
+        ref_audio, gen_audio = get_audios(line=line, dataset_path=dataset_path)
+        # Gets evaluation
+        mcd, pesq, stoi, estoi, mos = eval_audio(ref_audio=ref_audio, gen_audio=gen_audio)
+        # result handling
+        result = {
+            "file": line.strip(),
+            "Mcd": float(mcd),
+            "Pesq": float(pesq),
+            "Stoi": float(stoi),
+            "Estoi": float(estoi),
+            "Mos": convert(mos)
+        }
+        log_event(f"Evaluatin of files: {line.strip()} done", web_mode)
+        log_event(f"mcd: {mcd}, Pesq: {pesq}, Stoi: {stoi}, Estoi: {estoi}, MOS: {mos}", web_mode)
+        log_event(f"", web_mode)
+        return result
+
+    except Exception as e:
+        # In case of an error
+        log_event(f"Error evaluating {line.strip()}: {str(e)}", web_mode)
+        return None
+
 def eval_dataset(meta: str, dataset_path: str = None, web_mode=False):
     """
         Main function responsible for evaluation
@@ -235,7 +272,7 @@ def eval_dataset(meta: str, dataset_path: str = None, web_mode=False):
     # Get all lines in meta file
     with open(meta, "r") as f:
         lines = f.readlines()
-    total = len(lines)
+    #total = len(lines)
 
     # json output result
     results_data = {
@@ -243,34 +280,19 @@ def eval_dataset(meta: str, dataset_path: str = None, web_mode=False):
         "results": []
     }
     save_results(results_data)
-    # saves result
-    for i, line in enumerate(lines):
-        # For each line in meta file
-        try:
-            log_event(f"{i + 1}/{total} Evaluating file: {line.strip()}", web_mode)
-            # Gets reference and generated audio
-            ref_audio, gen_audio = get_audios(line=line, dataset_path=dataset_path)
-            # Gets evaluation
-            mcd, pesq, stoi, estoi, mos = eval_audio(ref_audio=ref_audio, gen_audio=gen_audio)
-            # result handling
-            result = {
-                "file": line.strip(),
-                "Mcd": float(mcd),
-                "Pesq": float(pesq),
-                "Stoi": float(stoi),
-                "Estoi": float(estoi),
-                "Mos": convert(mos)
-            }
-            log_event(f"Evaluatin of files: {line.strip()} done", web_mode)
-            log_event(f"mcd: {mcd}, Pesq: {pesq}, Stoi: {stoi}, Estoi: {estoi}, MOS: {mos}", web_mode)
-            log_event(f"", web_mode)
-            results_data["results"].append(result)
-            save_results(results_data)
 
-        except Exception as e:
-            # In case of an error
-            log_event(f"Error evaluating {line.strip()}: {str(e)}", web_mode)
-            continue
+    max_workers = max(1, os.cpu_count() // 2)
+    #Max workers is set to half of cpu count, can be upped
+
+    # Parallelisation of evaluation
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(process_line, line, dataset_path, web_mode) for line in lines]
+        for future in concurrent.futures.as_completed(futures):
+            result = future.result()
+            if result:
+                results_data["results"].append(result)
+                save_results(results_data)
+
 
     #End of an evaluation
     results_data["status"] = "completed"
