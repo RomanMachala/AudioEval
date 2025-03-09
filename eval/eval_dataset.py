@@ -8,11 +8,7 @@ __author__  = "Roman Machala"
 __date__    = "14.12.2024"
 __version__ = "0.1"
 
-from pydantic import BaseModel
-import json
-import time
 import numpy as np
-import pandas as pd
 from scipy.io import wavfile
 import librosa
 from fastdtw import fastdtw
@@ -63,6 +59,14 @@ class Audio:
         )
     
     def normalize(self) -> np.ndarray:
+        """
+            Method for normalization.
+            wavfile reads file as ints or floats, dnsmos
+            expects values in a range from -1 to 1.
+
+            Returns:
+                normalized np.array
+        """
         if self.audio.dtype == np.int16:
             return self.audio.astype(np.float32) / 32768.0
         elif self.audio.dtype == np.int32:
@@ -73,6 +77,19 @@ class Audio:
             return self.audio.astype(np.float32)
 
     def extract_mgc(self, frame_length=512, hop_length=128, order=24, alpha=0.35, stage=5):
+        """
+            MGC extraction method.
+
+            Params:
+                frame_length:       lenght of frame
+                hop_length:         move length
+                order:              --
+                alpha:              --
+                stage:              --
+
+            Returns:
+                MGC coefficients
+        """
         # If invalid sample rate, resample
         if self.rate != 16000:
             try:
@@ -105,6 +122,9 @@ def get_audios(line: str, dataset_path: str) -> list[Audio]:
     Params:
         line            : one line from meta file
         dataset_path    : in case paths in meta file are relative
+
+    Returns:
+        reference and generated audios
     """
     file_paths = line.strip().split()
     # If line in meta file doesnt contain 2 files, raise an exception

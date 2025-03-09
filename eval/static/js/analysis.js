@@ -23,3 +23,37 @@ document.querySelectorAll(".metric-section-header").forEach(header => {
         }
     });
 });
+
+// Event listener to return to existing analysis
+document.querySelector("#analysis-exists").addEventListener("click", async function(event){
+    // Hides container section and shows analysis section
+    document.querySelector("#container").style.display = "none";
+    document.querySelector(".analysis-section").style.display = "block";
+
+    let uploadStatus = document.getElementById("upload-status");
+
+    // Fetches results
+    let processResponse = await fetch('/process/', { method: 'POST' });
+    let processResult = await processResponse.json();
+    /* If endpoint resulted in OK, then display graphs */
+    if (processResponse.ok) {
+        uploadStatus.innerText = "Analysis complete!";
+        displayGraphs(processResult.generated_plots);
+        console.log(processResult.generated_plots)
+    } else {
+        /* Else atleast present an error */
+        uploadStatus.innerText = "Error generating graphs.";
+    }
+
+    let tablesResponse = await fetch('/get_tables/', { method: 'POST' });
+    let tablesResult = await tablesResponse.json();
+    /* If endpoint resulted in OK, then display graphs */
+    if (tablesResponse.ok) {
+        uploadStatus.innerText = "Fetching tables data ok!";
+        displayTables(tablesResult.tables);
+        console.log(tablesResult.tables)
+    } else {
+        /* Else atleast present an error */
+        uploadStatus.innerText = "Error getting table data.";
+    }
+});

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import json
 import os
 import pandas as pd
-from plots.analysis import analysis
+from plots.analysis import analysis, table
 from eval_dataset import get_audios, eval_audio
 import numpy as np
 import asyncio
@@ -132,7 +132,7 @@ async def process_files():
     # All metrics, that are "valid"
     metrics = ['Pesq', 'Stoi', 'Estoi', 'Mcd', 'Mos']
 
-    # Goes through all files in upload path folder
+        # Goes through all files in upload path folder
     for filename in os.listdir(UPLOAD_PATH):
         file_path = os.path.join(UPLOAD_PATH, filename)
         try:
@@ -160,6 +160,64 @@ async def process_files():
         return JSONResponse(status_code=400, content={"error": "No valid file was processed."})
     # Else returns dictionary containing generated graphs paths
     return {"generated_plots": generated_plots}
+
+@app.post('/get_tables/')
+async def get_tables():
+    """
+        Endpoint for table values calculation.
+
+        Calculated mean, median, min and max values for each file and metric
+        and returns these values as json
+    """
+
+    # JSON structure
+    tables = {
+    "Files": [],
+    "Values": {
+        "Pesq": [],
+        "Stoi" : [],
+        "Estoi": [],
+        "Mcd": [],
+        "ovrl_mos": [],
+        "sig_mos" : [],
+        "bak_mos": [],
+        "p808_mos": []
+        }
+    }
+    # Metrics to be calculated
+    metrics = ['Pesq', 'Stoi', 'Estoi', 'Mcd', 'Mos']
+    # Iterate through uploaded files
+    for file in os.listdir(UPLOAD_PATH):
+        file_path = os.path.join(UPLOAD_PATH, file)
+        file_name = os.path.splitext(file)[0]
+
+        try:
+            with open(file_path, 'r') as f:
+                # Gets file content
+                raw_data = json.load(f)
+            # Creates dataframe
+            data = pd.DataFrame(raw_data['results'])
+            # For each metric that is in column of said dataframe
+            # creates a graph and adds it into the dict
+            for metric in metrics:
+                if metric in data.columns:
+                    # Calculate values
+                    values = table(data, metric)
+                    if metric != 'Mos':
+                        tables['Values'][metric].append(values)
+                    else:
+                        tables['Values']['ovrl_mos'].append(values[0])
+                        tables['Values']['sig_mos'].append(values[1])
+                        tables['Values']['bak_mos'].append(values[2])
+                        tables['Values']['p808_mos'].append(values[3])
+            tables['Files'].append(file_name)
+        except ValueError:
+            #TODO better handling, if and exception occurs skips it
+            continue
+        if not tables:
+            return JSONResponse(status_code=400, content={"error": "No valid file was processed."})
+    # Else returns dictionary containing generated graphs paths
+    return {"tables": tables}
 
 def eval_dataset(meta: str, dataset_path: str = None, web_mode=False):
     """
@@ -238,6 +296,9 @@ def log_event(message, web_mode=False):
         print(message)
 
 async def log_generator():
+    """
+        Returns logs to be displayed. Checks every 5 sec.
+    """
     last_log_index = 0
     while True:
         if last_log_index < len(log_messages):
@@ -245,10 +306,13 @@ async def log_generator():
                 yield f"data: {log}\n\n"
             last_log_index = len(log_messages)
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(5)
 
 @app.get("/log-stream/")
 async def stream_logs():
+    """
+        endpoint for log streaming evaluation progress to frontend
+    """
     return StreamingResponse(log_generator(), media_type="text/event-stream")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
