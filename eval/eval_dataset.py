@@ -226,6 +226,5 @@ def eval_audio(ref_audio: Audio, gen_audio: Audio):
         print(e)
         mos = "NaN"
 
-    print (mcd, pesq, stoi, estoi, mos)
     return mcd, pesq, stoi, estoi, mos
     #TODO handle exceptions

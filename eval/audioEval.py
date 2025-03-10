@@ -10,6 +10,7 @@ from eval_dataset import get_audios, eval_audio
 import numpy as np
 import asyncio
 import concurrent.futures
+import sys
 
 class EvaluationRequest(BaseModel):
     """
@@ -256,7 +257,7 @@ def process_line(line, dataset_path, web_mode):
         log_event(f"Error evaluating {line.strip()}: {str(e)}", web_mode)
         return None
 
-def eval_dataset(meta: str, dataset_path: str = None, web_mode=False):
+def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intrusive: bool=True):
     """
         Main function responsible for evaluation
         goes through every line in meta file and gets audio names
@@ -316,6 +317,7 @@ def log_event(message, web_mode=False):
             log_messages.pop(0)
     else:
         print(message)
+        sys.stdout.flush()
 
 async def log_generator():
     """
@@ -340,6 +342,9 @@ async def stream_logs():
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if __name__ == "__main__":
+    from handlers.arg_handler import handle_arguments
     #FOR CLI EVALUATION ONLY 
     #eval_dataset(TODO handle args)
-    pass
+    meta, dataset, save, intrusive = handle_arguments(sys.argv)
+    RESULTS_FILE = save
+    eval_dataset(meta=meta, dataset_path=dataset if dataset != 'none' else None, web_mode=False, intrusive=True if intrusive == 'true' else False)
