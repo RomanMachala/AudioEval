@@ -30,30 +30,27 @@ document.querySelector("#analysis-exists").addEventListener("click", async funct
     document.querySelector("#container").style.display = "none";
     document.querySelector(".analysis-section").style.display = "block";
 
-    let uploadStatus = document.getElementById("upload-status");
+    showModal("Uploading files...");
 
-    // Fetches results
-    let processResponse = await fetch('/process/', { method: 'POST' });
-    let processResult = await processResponse.json();
-    /* If endpoint resulted in OK, then display graphs */
-    if (processResponse.ok) {
-        uploadStatus.innerText = "Analysis complete!";
-        displayGraphs(processResult.generated_plots);
-        console.log(processResult.generated_plots)
-    } else {
-        /* Else atleast present an error */
-        uploadStatus.innerText = "Error generating graphs.";
-    }
-
-    let tablesResponse = await fetch('/get_tables/', { method: 'POST' });
-    let tablesResult = await tablesResponse.json();
-    /* If endpoint resulted in OK, then display graphs */
-    if (tablesResponse.ok) {
-        uploadStatus.innerText = "Fetching tables data ok!";
-        displayTables(tablesResult.tables);
-        console.log(tablesResult.tables)
-    } else {
-        /* Else atleast present an error */
-        uploadStatus.innerText = "Error getting table data.";
+    try{
+        let processResponse = await fetch('/process/', { method: 'POST' });
+        let processResult = await processResponse.json();
+        /* If endpoint resulted in OK, then display graphs and tables */
+        if (processResponse.ok) {
+            updateModalText("Processing files...");
+            displayGraphs(processResult.generated_plots);
+            displayTables(processResult.generated_plots.tables);
+            console.log(processResult.generated_plots)
+        } else {
+            /* Else atleast present an error */
+            alert("An error occured while trying to fetch graphs, please check your files and try again.");
+            return;
+        }
+    } catch (error){
+        console.log(error);
+        alert("An error occured while trying to load previous analysis, please check your files and try again.");
+        return;
+    } finally{
+        hideModal();
     }
 });

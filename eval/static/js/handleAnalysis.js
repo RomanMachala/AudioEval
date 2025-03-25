@@ -16,70 +16,103 @@ document.getElementById("upload-form").addEventListener("submit", async function
     let formData = new FormData();
     let files = document.getElementById("file-input").files;
 
-    /* If there are no files, return */
+    /* If there are no files */
     if (files.length === 0) {
         alert("Please input at least one file!");
         return;
     }
-    /* Append submited files to the formData */
+
+    /* Add files to formData */
     for (let i = 0; i < files.length; i++) {
         formData.append("files", files[i]);
     }
 
-    /* Uploads files, validates them */
-    let response = await fetch('/upload/', {
-        method: 'POST',
-        body: formData
-    });
+    /* Show modal window for loading */
+    showModal("Uploading files...");
 
-    /* Wait for result */
-    let result = await response.json();
-    console.log(JSON.stringify(result, null, 2));
-    /* HTML element where status about uploading is presented */
-    let uploadStatus = document.getElementById("upload-status");
+    try {
+        let response = await fetch('/upload/', {
+            method: 'POST',
+            body: formData
+        });
 
-    /* If there are some files that are valid */
-    if (result.valid_files && result.valid_files.length > 0) {
-        let validFilesText = "Valid files:\n" + result.valid_files.join("\n");
-        uploadStatus.innerText = validFilesText;
+        let result = await response.json();
+        console.log(JSON.stringify(result, null, 2));
 
-        /* Hide upload section and show analysis section */
-        document.querySelector("#container").style.display = "none";
-        document.querySelector(".analysis-section").style.display = "block";
 
-        /* Call the process endpoint */
-        let processResponse = await fetch('/process/', { method: 'POST' });
-        let processResult = await processResponse.json();
+        if (result.valid_files && result.valid_files.length > 0) {
+            let validFilesText = "Valid files:\n" + result.valid_files.join("\n");
+            updateModalText(validFilesText);
 
-        /* If endpoint resulted in OK, then display graphs */
-        if (processResponse.ok) {
-            uploadStatus.innerText = "Analysis complete!";
-            displayGraphs(processResult.generated_plots);
-            console.log(processResult.generated_plots)
+            document.querySelector("#container").style.display = "none";
+            document.querySelector(".analysis-section").style.display = "block";
+
+            /* Update loading modal */
+            updateModalText("Processing files...");
+
+            /* Call endpoint for processing */
+            let processResponse = await fetch('/process/', { method: 'POST' });
+            let processResult = await processResponse.json();
+
+            /* Show graphs and tables */
+            if (processResponse.ok) {
+                displayGraphs(processResult.generated_plots);
+                displayTables(processResult.generated_plots.tables);
+                console.log(processResult.generated_plots);
+            } else {
+                updateModalText("Error generating graphs.");
+                alert("Error generating graphs.");
+                return;
+            }
         } else {
-            /* Else atleast present an error */
-            uploadStatus.innerText = "Error generating graphs.";
+            updateModalText("No valid files uploaded.");
+            alert("No valid files uploaded.");
+            return;
         }
-
-        let tablesResponse = await fetch('/get_tables/', { method: 'POST' });
-        let tablesResult = await tablesResponse.json();
-        console.log(tablesResponse);
-        if (tablesResponse.ok){
-            uploadStatus.innerText = "Tables generation ok.";
-            displayTables(tablesResult.tables);
-            console.log(tablesResult.tables);
-        }else{
-            uploadStatus.innerText = "An error occured while trying to get values.";
-        }
-
-    } else {
-        /* If there are no valid files */
-        uploadStatus.innerText = "No valid files uploaded.";
+    } catch (error){
+        console.error("Error:", error);
+        alert("An error occured while uploading files, please check your files and try again.");
+        return
+    } finally{
+        /* Hide modal */
+        hideModal();
     }
 
-    //Clears file input
+    /* Clear input files */
     document.getElementById('file-input').value = '';
 });
+
+/**
+ * 
+ * @param text text to be shown in loading modal
+ * 
+ * @brief function to show modal window while fetching results
+ * 
+ */
+function showModal(text) {
+    document.getElementById("upload-modal-text").innerText = text;
+    document.getElementById("upload-modal").style.display = "flex";
+}
+
+/**
+ * 
+ * @param text text to be shown in loading modal
+ * 
+ * @brief function to update modal window
+ * 
+ */
+function updateModalText(text) {
+    document.getElementById("upload-modal-text").innerText = text;
+}
+
+/**
+ * 
+ * @brief function to hide modal
+ * 
+ */
+function hideModal() {
+    document.getElementById("upload-modal").style.display = "none";
+}
 
 /**
  * 
@@ -89,11 +122,17 @@ document.getElementById("upload-form").addEventListener("submit", async function
  * 
  */
 function displayGraphs(graphs) {
+    const allowedMetrics = ["Pesq", "Stoi", "Estoi", "Mcd", "Mos"];
+    console.log(graphs);
     for (const [metric, paths] of Object.entries(graphs)) {
+        if (!allowedMetrics.includes(metric)) continue;
         /* Select corresponding HTML element based on metric */
+        console.log(metric);
         let section = document.getElementById(`${metric}-section`).querySelector(".charts-container");
         section.innerHTML = ""; /* If there are some graphs remove them */
         paths.forEach(path => {
+            console.log(path);
+            if (path === null || path === undefined || path === "" || path === "null") return;
             /* For each path (one path = one graph) create an img element with said path*/
             let img = document.createElement("img");
             img.src = path;

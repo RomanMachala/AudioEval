@@ -6,7 +6,8 @@ import json
 import os
 import pandas as pd
 from plots.analysis import analysis, table
-from eval_dataset import get_audios, eval_audio
+from eval_dataset import get_audios, eval_audio, Audio
+from speechmos import dnsmos
 import numpy as np
 import asyncio
 import concurrent.futures
@@ -19,6 +20,8 @@ class EvaluationRequest(BaseModel):
     """
     meta_file: str
     dataset_path: str
+    intrusive: bool
+    save_name: str
 
 """
     Global variables for evaluation output
@@ -68,6 +71,9 @@ async def start_evaluation(request: EvaluationRequest, background_tasks: Backgro
     # Extract parameterrs
     meta_file = request.meta_file
     dataset_path = request.dataset_path
+    intrusive = request.intrusive
+    filename = request.save_name
+    #TODO handle filename to actually save as desired name
 
     # Checks for existence of parameters
     if not os.path.exists(meta_file):
@@ -75,10 +81,9 @@ async def start_evaluation(request: EvaluationRequest, background_tasks: Backgro
     if not os.path.exists(dataset_path):
         return JSONResponse(content={"message": "Selected dataset path doesn't exist"}, status_code=400)
     # Start evaluation as background task
-    background_tasks.add_task(eval_dataset, meta_file, dataset_path, True)
+    background_tasks.add_task(eval_dataset, meta_file, dataset_path, True, intrusive)
     # Return response
     return JSONResponse(content={"message": "Evaluation started"}, status_code=200)
-
 
 @app.get("/")
 async def read_index():
@@ -129,7 +134,20 @@ async def process_files():
         "Stoi": [],
         "Estoi": [],
         "Mcd": [],
-        "Mos": []
+        "Mos": [],
+        "tables": {
+            "Files": [],
+            "Values": {
+                "Pesq": [],
+                "Stoi" : [],
+                "Estoi": [],
+                "Mcd": [],
+                "ovrl_mos": [],
+                "sig_mos" : [],
+                "bak_mos": [],
+                "p808_mos": []
+            }
+        },
     }
     # All metrics, that are "valid"
     metrics = ['Pesq', 'Stoi', 'Estoi', 'Mcd', 'Mos']
@@ -149,9 +167,20 @@ async def process_files():
             for metric in metrics:
                 if metric in data.columns:
                     plot_path = os.path.join(GRAPHS_PATH, f'{file_name}_{metric}.png')
-                    analysis(data, metric, plot_path, file_name)
-                    web_path = plot_path.replace("static" + os.sep, "/static/")
-                    web_path = web_path.replace("\\", "/")
+                    if analysis(data, metric, plot_path, file_name):
+                        web_path = plot_path.replace("static" + os.sep, "/static/")
+                        web_path = web_path.replace("\\", "/")
+                        values = table(data, metric)
+                        if metric != 'Mos':
+                            generated_plots['tables']['Values'][metric].append(values)
+                        else:
+                            generated_plots['tables']['Values']['ovrl_mos'].append(values[0])
+                            generated_plots['tables']['Values']['sig_mos'].append(values[1])
+                            generated_plots['tables']['Values']['bak_mos'].append(values[2])
+                            generated_plots['tables']['Values']['p808_mos'].append(values[3])
+                            generated_plots['tables']['Files'].append(file_name)
+                    else:
+                        web_path = "null"
                     # adds generated graph path to corresponding metric in dict
                     generated_plots[metric].append(web_path)
         except ValueError:
@@ -163,65 +192,7 @@ async def process_files():
     # Else returns dictionary containing generated graphs paths
     return {"generated_plots": generated_plots}
 
-@app.post('/get_tables/')
-async def get_tables():
-    """
-        Endpoint for table values calculation.
-
-        Calculated mean, median, min and max values for each file and metric
-        and returns these values as json
-    """
-
-    # JSON structure
-    tables = {
-    "Files": [],
-    "Values": {
-        "Pesq": [],
-        "Stoi" : [],
-        "Estoi": [],
-        "Mcd": [],
-        "ovrl_mos": [],
-        "sig_mos" : [],
-        "bak_mos": [],
-        "p808_mos": []
-        }
-    }
-    # Metrics to be calculated
-    metrics = ['Pesq', 'Stoi', 'Estoi', 'Mcd', 'Mos']
-    # Iterate through uploaded files
-    for file in os.listdir(UPLOAD_PATH):
-        file_path = os.path.join(UPLOAD_PATH, file)
-        file_name = os.path.splitext(file)[0]
-
-        try:
-            with open(file_path, 'r') as f:
-                # Gets file content
-                raw_data = json.load(f)
-            # Creates dataframe
-            data = pd.DataFrame(raw_data['results'])
-            # For each metric that is in column of said dataframe
-            # creates a graph and adds it into the dict
-            for metric in metrics:
-                if metric in data.columns:
-                    # Calculate values
-                    values = table(data, metric)
-                    if metric != 'Mos':
-                        tables['Values'][metric].append(values)
-                    else:
-                        tables['Values']['ovrl_mos'].append(values[0])
-                        tables['Values']['sig_mos'].append(values[1])
-                        tables['Values']['bak_mos'].append(values[2])
-                        tables['Values']['p808_mos'].append(values[3])
-            tables['Files'].append(file_name)
-        except ValueError:
-            #TODO better handling, if and exception occurs skips it
-            continue
-        if not tables:
-            return JSONResponse(status_code=400, content={"error": "No valid file was processed."})
-    # Else returns dictionary containing generated graphs paths
-    return {"tables": tables}
-
-def process_line(line, dataset_path, web_mode):
+def process_line(line: str, dataset_path: str, web_mode: bool, intrusive: bool = False):
     """
         Function to evaluate audios specificated by line in meta file
 
@@ -229,15 +200,22 @@ def process_line(line, dataset_path, web_mode):
             line:           contains ref and gen audio path
             dataset_path:   path to dataset
             web_mode:       logging mode
+            intrusive:      whether to assess audios using intrusive methods
 
         Returns:
             results of evaluation
     """
     try:
         # Gets reference and generated audio
-        ref_audio, gen_audio = get_audios(line=line, dataset_path=dataset_path)
-        # Gets evaluation
-        mcd, pesq, stoi, estoi, mos = eval_audio(ref_audio=ref_audio, gen_audio=gen_audio)
+        if intrusive:
+            ref_audio, gen_audio = get_audios(line=line, dataset_path=dataset_path)
+            # Gets evaluation
+            mcd, pesq, stoi, estoi, mos = eval_audio(ref_audio=ref_audio, gen_audio=gen_audio)
+        else:
+            audio_path = line.strip()
+            gen_audio = Audio(audio_path if dataset_path is None else os.path.join(dataset_path, audio_path))
+            mos = dnsmos.run(gen_audio.normalize(), 16000)
+            mcd, pesq, stoi, estoi = "NaN", "NaN", "NaN", "NaN"
         # result handling
         result = {
             "file": line.strip(),
@@ -257,7 +235,7 @@ def process_line(line, dataset_path, web_mode):
         log_event(f"Error evaluating {line.strip()}: {str(e)}", web_mode)
         return None
 
-def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intrusive: bool=True):
+def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intrusive: bool=False):
     """
         Main function responsible for evaluation
         goes through every line in meta file and gets audio names
@@ -287,7 +265,7 @@ def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intr
 
     # Parallelisation of evaluation
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(process_line, line, dataset_path, web_mode) for line in lines]
+        futures = [executor.submit(process_line, line, dataset_path, web_mode, intrusive) for line in lines]
         for future in concurrent.futures.as_completed(futures):
             result = future.result()
             if result:
@@ -330,7 +308,7 @@ async def log_generator():
                 yield f"data: {log}\n\n"
             last_log_index = len(log_messages)
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(2)
 
 @app.get("/log-stream/")
 async def stream_logs():

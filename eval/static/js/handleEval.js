@@ -19,7 +19,9 @@
 function startEvaluation() {
     const metaFile = document.getElementById("meta-file").value;
     const datasetPath = document.getElementById("dataset-path").value;
-    /* Form values, presented file and dataset path */
+    const intrusive = document.getElementById("intrusive").checked;
+    const filename = document.getElementById("save-name").value;
+    /* Form values, presented file, dataset path and whether to use intrusive evaluation aswell */
 
     /* If there were no values presented */
     if (!metaFile || !datasetPath) {
@@ -30,7 +32,7 @@ function startEvaluation() {
     fetch("/start-evaluation/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ meta_file: metaFile, dataset_path: datasetPath })
+        body: JSON.stringify({ meta_file: metaFile, dataset_path: datasetPath, intrusive: intrusive, save_name: filename })
     })
     .then(response => response.json())
     .then(data => {

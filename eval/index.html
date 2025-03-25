@@ -7,16 +7,26 @@
     <link rel="stylesheet" href="static/styles/main.css">
     <link rel="stylesheet" href="static/styles/evaluation.css">
     <link rel="stylesheet" href="static/styles/analysis.css">
+    <link rel="stylesheet" href="static/styles/modal.css">
 
     <title>Audio evaluation tool</title>
 </head>
 
 <body>
+    <div id="upload-modal" class="modal">
+        <div class="modal-content">
+            <div class="loader"></div>
+            <p id="upload-modal-text">Uploading files...</p>
+        </div>
+    </div>
     <div class="container" id="container">
         <div class="form-container eval-form">
             <form>
                 <input type="text" id="meta-file" placeholder="Meta file path">
                 <input type="text" id="dataset-path" placeholder="Dataset path">
+                <label for="intrusive">Intrusive evaluation:</label>
+                <input type="checkbox" id="intrusive" name="intrusive">
+                <input type="text" id="save-name" placeholder="Desired output filename">
                 <button type="button" onclick="startEvaluation()">Start evaluation</button>
             </form>
             <p>
@@ -68,7 +78,6 @@
     <div class="analysis-section">
         <div class="analysis-container">
             <h2>Analysis Results</h2>
-            <div id="upload-status"></div>
             <div class="graphs-section">
                 <div id="Pesq-section" class="metric-section">
                     <h3 class="metric-section-header">PESQ</h3>
