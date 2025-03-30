@@ -9,6 +9,51 @@
  * 
  */
 
+const allowedMetrics = ["Pesq", "Stoi", "Estoi", "Mcd", "Mos"];
+function revert(){
+    document.querySelector("#container").style.display = "block";
+    document.querySelector(".analysis-section").style.display = "none";
+}
+
+function display(){
+    document.querySelector("#container").style.display = "none";
+    document.querySelector(".analysis-section").style.display = "block";
+}
+
+async function displayAnalysis(flag){
+    try{
+        if(flag){
+            showModal("Loading last analysis");
+        }
+        display();
+
+        /* Update loading modal */
+        updateModalText("Processing files...");
+
+        /* Call endpoint for processing */
+        let processResponse = await fetch('/process/', { method: 'POST' });
+        let processResult = await processResponse.json();
+
+        /* Show graphs and tables */
+        if (processResponse.ok) {
+            displayGraphs(processResult.generated_plots);
+            displayTables(processResult.generated_plots.tables);
+            console.log(processResult.generated_plots);
+        } else {
+            updateModalText("Error generating graphs.");
+            alert("Error generating graphs.");
+            return;
+        }
+    }catch (error){
+        console.log(error);
+        alert("An error occured while trying to display analysis section");
+        // Revert back to selection
+        revert();
+        return;
+    }finally{
+        hideModal();
+    }
+}
 // Event lisener for uploaded files button, on click do:
 document.getElementById("upload-form").addEventListener("submit", async function (event) {
     event.preventDefault(); /* Cancel automatic redirection */
@@ -39,47 +84,31 @@ document.getElementById("upload-form").addEventListener("submit", async function
         let result = await response.json();
         console.log(JSON.stringify(result, null, 2));
 
-
+        updateModalText("Loading files...");
         if (result.valid_files && result.valid_files.length > 0) {
             let validFilesText = "Valid files:\n" + result.valid_files.join("\n");
             updateModalText(validFilesText);
-
-            document.querySelector("#container").style.display = "none";
-            document.querySelector(".analysis-section").style.display = "block";
-
-            /* Update loading modal */
-            updateModalText("Processing files...");
-
-            /* Call endpoint for processing */
-            let processResponse = await fetch('/process/', { method: 'POST' });
-            let processResult = await processResponse.json();
-
-            /* Show graphs and tables */
-            if (processResponse.ok) {
-                displayGraphs(processResult.generated_plots);
-                displayTables(processResult.generated_plots.tables);
-                console.log(processResult.generated_plots);
-            } else {
-                updateModalText("Error generating graphs.");
-                alert("Error generating graphs.");
-                return;
-            }
+            displayAnalysis(false);
         } else {
             updateModalText("No valid files uploaded.");
             alert("No valid files uploaded.");
+            revert();
             return;
         }
     } catch (error){
         console.error("Error:", error);
         alert("An error occured while uploading files, please check your files and try again.");
+        revert();
         return
-    } finally{
-        /* Hide modal */
-        hideModal();
     }
 
     /* Clear input files */
     document.getElementById('file-input').value = '';
+});
+
+document.getElementById("analysis-button-continue").addEventListener('click', async function(event) {
+    event.preventDefault();
+    displayAnalysis(true);
 });
 
 /**
@@ -114,6 +143,48 @@ function hideModal() {
     document.getElementById("upload-modal").style.display = "none";
 }
 
+function createMetricSection(metric){
+    if(document.getElementById(`${metric}-section`)){
+        return;
+    }
+    let section = document.getElementsByClassName("graphs-section")[0];
+    const newSection = document.createElement('div'); //Metric section (MOS-section for example)
+    newSection.classList.add('metric-section');
+    newSection.id =`${metric}-section`;
+    // Creates header
+    const sectionHeader = document.createElement('h3');
+    sectionHeader.classList.add('metric-section-header');
+    sectionHeader.innerText = metric;
+
+    sectionHeader.addEventListener("click", function() {
+        let content = this.nextElementSibling;
+        if (content.style.maxHeight && content.style.maxHeight !== "0px") {
+            content.style.maxHeight = "0px";
+            content.style.padding = "0 10px";
+        } else {
+            content.style.maxHeight = content.scrollHeight + "px";
+            content.style.padding = "10px";
+        }
+    });
+
+    newSection.appendChild(sectionHeader);
+    // Wrapper for graphs and tables
+    const newSectionContainer = document.createElement('div');
+    newSectionContainer.classList.add('metric-section-container');
+
+    const newChartsContainer = document.createElement('div');
+    const newTableContainer = document.createElement('div');
+    newChartsContainer.classList.add('charts-container');
+    newTableContainer.classList.add('tables-container');
+
+    newSectionContainer.appendChild(newChartsContainer);
+    newSectionContainer.appendChild(newTableContainer);
+
+    newSection.appendChild(newSectionContainer);
+    // append section for each metric
+    section.appendChild(newSection);
+}
+
 /**
  * 
  * @param graphs json response containing graphs paths for each metric
@@ -122,12 +193,12 @@ function hideModal() {
  * 
  */
 function displayGraphs(graphs) {
-    const allowedMetrics = ["Pesq", "Stoi", "Estoi", "Mcd", "Mos"];
     console.log(graphs);
     for (const [metric, paths] of Object.entries(graphs)) {
         if (!allowedMetrics.includes(metric)) continue;
         /* Select corresponding HTML element based on metric */
         console.log(metric);
+        createMetricSection(metric);
         let section = document.getElementById(`${metric}-section`).querySelector(".charts-container");
         section.innerHTML = ""; /* If there are some graphs remove them */
         paths.forEach(path => {
@@ -152,7 +223,6 @@ function displayGraphs(graphs) {
  * 
  */
 function displayTables(tables) {
-    const metrics = ["Pesq", "Stoi", "Estoi", "Mcd", "Mos"];
     const mosLabels = {
         "ovrl_mos": "Overall MOS",
         "sig_mos": "Signal MOS",
@@ -160,7 +230,7 @@ function displayTables(tables) {
         "p808_mos": "P808 MOS"
     };
     // Iterates through each section
-    metrics.forEach(metric => {
+    allowedMetrics.forEach(metric => {
         let section = document.getElementById(`${metric}-section`);
         if (!section) {
             console.warn(`No section for ${metric} metric.`);
@@ -190,7 +260,11 @@ function displayTables(tables) {
         } else {
             //Other metrics have only one table
             let table = createTable(tables.Files, tables.Values[metric]);
-            tablesContainer.appendChild(table);
+            if(table){
+                tablesContainer.appendChild(table);
+            }else{
+                tablesContainer.innerHTML = `<p>There was no data provided for ${metric} metric due to non-intrusive evaluation only.</p>`;
+            }
         }
     });
 }
@@ -205,6 +279,11 @@ function displayTables(tables) {
  * 
  */
 function createTable(files, values) {
+    console.log(values);
+    if (values.length === 0) {
+        console.log("No data was provided for table creation");
+        return null;
+    }
     let table = document.createElement("table");
     table.classList.add("metric-table");
 

@@ -65,6 +65,10 @@ function startLogStream() {
     eventSource.onmessage = function(event) {
         logOutput.textContent += event.data + "\n";
         logOutput.scrollTop = logOutput.scrollHeight;
+        if (event.data === "Evaluation completed.") {
+            console.log("Evaluation completed, disconnecting.");
+            eventSource.close();
+        }
         /* Append message to the "console" and scroll to last message */
     };
     /* In case an error occures print to console */

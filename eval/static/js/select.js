@@ -4,7 +4,7 @@
  * @date 13.02.2025
  * @brief Simple script containing logic for analysis/evaluation form selection
  *          Depending on which button is pressed a class is removed/added to a 
- *          element, based on this classed the container is covering different
+ *          element, based on this class the container is covering different
  *          element
  * 
  */

@@ -53,18 +53,6 @@
     flex-wrap: wrap;
     justify-content: center;
 }
-.metric-about {
-    width: 90%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-.metric-about p {
-    padding: 20px;
-    text-align: center;
-    font-size: 24pt;
-}
 .metric-table {
     width: 100%;
     border-collapse: collapse;
@@ -113,4 +101,7 @@
     align-items: center;
     justify-content: space-evenly;
     flex-wrap: wrap;
+}
+.tables-container p {
+    padding: 5%;
 }

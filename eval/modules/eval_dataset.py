@@ -15,10 +15,14 @@ from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
 import pysptk
 import os
-from metrics.pesq import eval_pesq, PesqEvaluationError
-from metrics.stoi import eval_stoi, eval_estoi, StoiEvaluationError
-from metrics.mcd import eval_mcd
+from modules.metrics.pesq import eval_pesq, PesqEvaluationError
+from modules.metrics.stoi import eval_stoi, eval_estoi, StoiEvaluationError
+from modules.metrics.mcd import eval_mcd
 from speechmos import dnsmos
+from modules.constants import RESULTS_FILE
+import concurrent.futures
+from speechmos import dnsmos
+from modules.handlers.log_handler import log_event, save_results, convert
 
 class InvalidMetaFileValue(Exception):
     """Meta file contains an invalid value, skipping current line"""
@@ -227,4 +231,91 @@ def eval_audio(ref_audio: Audio, gen_audio: Audio):
         mos = "NaN"
 
     return mcd, pesq, stoi, estoi, mos
-    #TODO handle exceptions
+
+def process_line(line: str, dataset_path: str, web_mode: bool, intrusive: bool = False):
+    """
+        Function to evaluate audios specificated by line in meta file
+
+        Params:
+            line:           contains ref and gen audio path
+            dataset_path:   path to dataset
+            web_mode:       logging mode
+            intrusive:      whether to assess audios using intrusive methods
+
+        Returns:
+            results of evaluation
+    """
+    try:
+        # Gets reference and generated audio
+        if intrusive:
+            ref_audio, gen_audio = get_audios(line=line, dataset_path=dataset_path)
+            # Gets evaluation
+            mcd, pesq, stoi, estoi, mos = eval_audio(ref_audio=ref_audio, gen_audio=gen_audio)
+        else:
+            audio_path = line.strip()
+            gen_audio = Audio(audio_path if dataset_path is None else os.path.join(dataset_path, audio_path))
+            mos = dnsmos.run(gen_audio.normalize(), 16000)
+            mcd, pesq, stoi, estoi = "NaN", "NaN", "NaN", "NaN"
+        # result handling
+        result = {
+            "file": line.strip(),
+            "Mcd": float(mcd),
+            "Pesq": float(pesq),
+            "Stoi": float(stoi),
+            "Estoi": float(estoi),
+            "Mos": convert(mos)
+        }
+        return result
+
+    except Exception as e:
+        # In case of an error
+        raise Exception
+    
+def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intrusive: bool=False, file_name: str=None):
+    """
+        Main function responsible for evaluation
+        goes through every line in meta file and gets audio names
+        and evalutes them
+
+        Params:
+            meta:           meta file path, containing meta data
+            dataset_path:   dataset path containing audios
+            web_mode:       flag, responsible for logging into CLI console or to the web application
+    """
+    log_event("Evaluation started.", web_mode)
+    if not file_name:
+        file_name = RESULTS_FILE    
+    # Get all lines in meta file
+    with open(meta, "r") as f:
+        lines = f.readlines()
+    #total = len(lines)
+
+    # json output result
+    results_data = {
+        "status": "running",
+        "path": dataset_path,
+        "results": []
+    }
+    save_results(results_data, file_name)
+
+    max_workers = max(1, os.cpu_count() // 2)
+    #Max workers is set to half of cpu count, can be upped
+
+    # Parallelisation of evaluation
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(process_line, line, dataset_path, web_mode, intrusive) for line in lines]
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                result = future.result()
+                results_data["results"].append(result)
+                save_results(results_data, file_name)
+                log_event(result, web_mode=web_mode)
+            except Exception as e:
+                log_event(e, web_mode=web_mode)
+
+    #End of an evaluation
+    results_data["status"] = "completed"
+    #Flag for completed evaluation
+    save_results(results_data, file_name)
+
+    log_event("Evaluation completed.", web_mode)

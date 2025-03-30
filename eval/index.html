@@ -42,7 +42,7 @@
                 Please select your configuration file you would like to see the analysis of.
                 Or contintue to previous analysis.
             </p>
-            <button id="analysis-exists">Continue</button>
+            <button id="analysis-button-continue">Continue</button>
         </div>
 
         <div class="cover-container">
@@ -79,126 +79,7 @@
         <div class="analysis-container">
             <h2>Analysis Results</h2>
             <div class="graphs-section">
-                <div id="Pesq-section" class="metric-section">
-                    <h3 class="metric-section-header">PESQ</h3>
-                    <div class="metric-section-container">
-                        <div class="charts-container">
-                        </div>
-                        <div class="tables-container">
-                        </div>
-                        <div class="metric-about">
-                            <p>
-                                PESQ (<i>Perceptual Evaluation of Speech Quality</i>) is a objective method used to
-                                measure audio quality, especially in telecommunicational
-                                systems and speech codecs. It is used to assess a speech quality after compression,
-                                transfer or other adjustments. This metrics compares a original
-                                (<i>reference</i>) signal with a output (<i>degraded</i>) one. The result of this metric
-                                is a <b>PESQ score</b> indicating a worsened quality of degraded speech
-                                with comparison to the reference one. In this scenario, PESQ is used to measure quality
-                                of a generated audio with regard to the reference one used as an input
-                                for TTS system.
-                            </p>
-                            <p>
-                                The output of this metric ranges from <b>-0.5</b> to <b>4.5</b>, where higher value
-                                means better quality.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div id="Stoi-section" class="metric-section">
-                    <h3 class="metric-section-header">STOI</h3>
-                    <div class="metric-section-container">
-                        <div class="charts-container">
-                        </div>
-                        <div class="tables-container">
-                        </div>
-                        <div class="metric-about">
-                            <p>
-                                STOI (<i>Short-Time Objective Intelligibility</i>) is a objective method used to measure
-                                intelligibility. It is primarily used
-                                to assess audio quality after speech processing such as speech codecs, VoIP or
-                                algorithms for noise suppression. The STOI metrics
-                                compares an original (<i>reference</i>) audio to a output (<i>degraded</i>) one,
-                                providing <b>STOI score</b>. In this scenario
-                                STOI metric is used to measure speech intelligibility of a degraded (<i>generated</i>)
-                                one with regard to the original one used as an input
-                                for TTS system.
-                            </p>
-                            <p>
-                                The output of this metric ranges from <b>0</b> to <b>1</b>, where higher value means
-                                better intelligibility.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div id="Estoi-section" class="metric-section">
-                    <h3 class="metric-section-header">ESTOI</h3>
-                    <div class="metric-section-container">
-                        <div class="charts-container">
-                        </div>
-                        <div class="tables-container">
-                        </div>
-                        <div class="metric-about">
-                            <p>
-                                ESTOI (<i>Extended Short-Time Objective Intelligibility</i>) is a objective method used
-                                to measure intelligibility. ESTOI is an extended version of STOI, providing
-                                accurate results when it comes to heavily degraded audio or generally audio containing
-                                noise. ESTOI was also designed to better mimic human-like
-                                speech perceiving. The scnario is the same as for metric STOI in this use-case.
-                            </p>
-                            <p>
-                                The output of this metric ranges from <b>0</b> to <b>1</b>, where higher value means
-                                better intelligibility.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div id="Mcd-section" class="metric-section">
-                    <h3 class="metric-section-header">MCD</h3>
-                    <div class="metric-section-container">
-                        <div class="charts-container">
-                        </div>
-                        <div class="tables-container">
-                        </div>
-                        <div class="metric-about">
-                            <p>
-                                MCD (<i>Mel-Cepstral Distortion</i>) is a metric used to measure a differrence of two
-                                speech signals based on their
-                                MFCC (<i>Mel-Cepstral Coefficients</i>). MCD is widely used in assessing quality of
-                                synthesized speech, for example in training a TTS model or
-                                in voice conversion.
-                            </p>
-                            <p>
-                                The output of this can be interpreted in a way where smaller values means better
-                                quality. For example <b>4 - 6</b> would mean almost
-                                indistinquishable synthesized speech from a human-like one.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div id="Mos-section" class="metric-section">
-                    <h3 class="metric-section-header">MOS</h3>
-                    <div class="metric-section-container">
-                        <div class="charts-container">
-                        </div>
-                        <div class="tables-container">
-                        </div>
-                        <div class="metric-about">
-                            <p>
-                                MOS (<i>Mean Opinion Score</i>) is one of the most used metric when it comes to audio
-                                quality assessment. Originally MOS is a subjective method
-                                requiring proffesional listeners to assess audio quality on a scale from <b>1</b> to
-                                <b>5</b>, where higher value means better quality.
-                                In this project a NN (<i>Neural Networks</i>) model is used to predict MOS score of a
-                                audio that would have been assigned to said audio by human
-                                listeners.
-                            </p>
-                            <p>
-                                MOS ranges from <b>1</b> to <b>5</b>, where higher value means better quality.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                
             </div>
             <div class="analysis-back">
                 <button type="button" id="back-button" onclick="goBackToSelect()">Back to analysis</button>

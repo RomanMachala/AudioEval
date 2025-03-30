@@ -1,7 +1,6 @@
 import numpy as np
+from modules.constants import _cons_log
 
-_cons_log = 10.0 / np.log(10.0) * np.sqrt(2.0)
-# Constant used in MCD equation
 
 def eval_mcd(ref: np.ndarray, gen: np.ndarray) -> float:
     """
