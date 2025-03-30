@@ -23,14 +23,11 @@ The author of this project and said Bachelor's theis is Roman Machala.
 - [Adaptability](#adaptability)
 
 ## Foreword
-This project was developed as a significant part of a Bachelor's Thesis at the Brno University of Technology, Faculty of Information Technology - Comparison and Analysis of Speech Synthesizers.
-The author of this project is Roman Machala.
-
-## Must know
 Text-to-Speeh (TTS) is a system capable of synthesizing speech based on prived text input using the computer. These systems have made significant advancements in recent years, especially in nature, intelligibility, etc. This project aims to provide a **audio evaluation tool** for these systems to evaluate their capabilities concerning audio quality. This tool utilizes some **objective** evaluation metrics to assess audio. Compared to **subjective** metrics (such as MOS) that require human listeners, this approach is time and cost-friendly.
 
 In short, this tool provides a simple, deterministic, reproducible, time- and cost-friendly audio assessment tool along with simple visualization.
 
+## Must know
 This system evaluates audio in intrusive and non-intrusive ways:
 - **intrusive evaluation** - requires reference samples to compare reference and generated audio samples
 - **non-intrusive** - requires only generated audio sample
