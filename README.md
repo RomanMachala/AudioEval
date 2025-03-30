@@ -39,8 +39,8 @@ When performing an intrusive evaluation, the non-intrusive assessment is perform
 
 When using intrusive evaluation:
 - compares reference and generated samples
-    - make sure that you have your meta file set up correctly
-    - make sure to use the exact transcriptions in reference and generated samples as different ones negatively affect results
+    - make sure that you have your meta file set up correctly
+    - make sure to use the exact transcriptions in reference and generated samples as different ones negatively affect results
 > **_NOTE:_** The intrusive evaluation compares the quality of the reference audio sample to the quality of the generated sample. Based on the quality difference - intelligibility, etc., could be affected. This scenario is aimed explicitly at zero-shot systems, where you provide a reference sample of a speaker you want to match. High-quality synthesized audio is expected when providing a high-quality reference sample with the exact transcription. Thus, in this use case, the intrusive evaluation measures the capabilities of zero-shot systems to produce high-quality audio samples by comparing the reference and generated samples.
 #### Used intrusive metrics
 The intrusive metrics used in this system are:
@@ -52,10 +52,10 @@ When comparing audio, they must be aligned first since the TTS system can produc
 
 ### Non-intrusive evaluation
 A MOS predictor, available at https://pypi.org/project/speechmos/, does the non-intrusive evaluation. This predictor is highly correlated with subjective evaluation metrics, thus providing reliable results regarding audio quality assessment. For each audio, the predictor returns:
-ovrl_mos - overall audio quality
-sig_mos - speech signal quality
-bak_mos - background quality
-p808_mos - reflects the overall quality of the audio sample based on subjective metrics
+- ovrl_mos - overall audio quality
+- sig_mos - speech signal quality
+- bak_mos - background quality
+- p808_mos - reflects the overall quality of the audio sample based on subjective metrics
 The **p808_mos** should be given the highest weight in this system.
 
 ## Installation 
