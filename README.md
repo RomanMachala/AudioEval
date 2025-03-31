@@ -109,7 +109,7 @@ The system expects a meta file (and optionally a path to a dataset).
 #### Examples of structure
 This section shows examples of structures of datasets for intrusive and non-intrusive evaluations.
 
-### Intrusive evaluation structure
+#### Intrusive evaluation structure
 The dataset structure could be as follows:
 ```
 dataset/
@@ -140,7 +140,7 @@ If using absolute paths in meta file, the structure should be:
     ...
 ```
 
-### Non-intrusive evaluation structure
+#### Non-intrusive evaluation structure
 The dataset structure could be as follows:
 ```
 dataset/
