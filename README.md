@@ -21,6 +21,14 @@ The author of this project and said Bachelor's theis is Roman Machala.
     - [Graphs section](#graphs-section)
     - [Tables section](#tables-section)
 - [Adaptability](#adaptability)
+- [Implementation details](#implementation-details)
+    - [Evaluation](#evaluation)
+    - [Logging mechanism](#logging-mechanism)
+    - [Evaluation files uploading](#evaluation-files-uploading)
+    - [Analysis processing](#analysis-processing)
+    - [Dynamic section generation](#dynamic-section-generation)
+    - [Samples visualization](#sample-visualization)
+- [Literature](#literature)
 
 ## Foreword
 Text-to-Speeh (TTS) is a system capable of synthesizing speech based on prived text input using the computer. These systems have made significant advancements in recent years, especially in nature, intelligibility, etc. This project aims to provide a **audio evaluation tool** for these systems to evaluate their capabilities concerning audio quality. This tool utilizes some **objective** evaluation metrics to assess audio. Compared to **subjective** metrics (such as MOS) that require human listeners, this approach is time and cost-friendly.
@@ -193,7 +201,299 @@ Besides graphs a set of tables is generatd containig fundamental statistical val
 | example | xy | xy | xy | xy |
 
 ### Audio section
-TODO !!!
+For each *.json* file containing results of evaluation a set of audios is selected and displayed through the application for listening. 
 
+
+To properly select these audios, it is crucial to leave the dataset stored at the same path that was used during evaluation. **After first analysis - uploading the json file, it is safe to relocate datasets, as copies of selected audios are made**.
 
 ## Adaptability
+The current state of the evaluation tool utilizes a pre-determined set of evaluation metrics. These metrics can be changed, as well as visualization results. If you want to add a new evaluation metric or remove old one - for example beacause it may be outdated, present irrelevant data, just follow the simple steps described below.
+
+In the [eval_dataset.py](eval/modules/eval_dataset.py) in functions:
+```python
+def get_audios(params);
+    """Returns audios"""
+
+def eval_audio(params):
+    """Evaluate audios using selected metrics"""
+
+    #add your custom evaluation metric here
+    x = evaluate_x(audio)
+    return mcd, pesq, stoi, estoi, mos, x
+
+def process_line(params):
+    """Processes line form metafile, loads audios and gets results"""
+    ref_audio, gen_audio = get_audios()
+    mcd, pesq, stoi, estoi, mos, x = eval_audios(ref_audio, gen_audio)
+    # Get audio eval results with new metric added (x)
+    results = {
+        "file": audios,
+        "Mcd": float(mcd),
+        "Pesq": float(pesq),
+        "Stoi": float(stoi),
+        "Estoi": float(estoi),
+        "Mos": convert(mos), #handles correct object converting
+        "x": float(x)
+    }
+    return results # returns audio assessment results with new metric (x)
+```
+This code above lets you add new functionality to the system - you can add new metrics, remove old ones, adjust them to your needs.
+
+Next step is to change the json file structure in [constants.py](eval/modules//constants.py) to generate graphs and create tables for this new metric:
+```json
+PLOTS_RESULT = {
+    "Pesq": [],
+    "Stoi": [],
+    "Estoi": [],
+    "Mcd": [],
+    "Mos": [],
+    "x": [],            - for graph generation  
+    "tables": {
+        "Files": [],
+        "Values": {
+            "Pesq": [],
+            "Stoi" : [],
+            "Estoi": [],
+            "Mcd": [],
+            "ovrl_mos": [],
+            "sig_mos" : [],
+            "bak_mos": [],
+            "p808_mos": [],
+            "x": []     - for table generation
+        }
+    },
+}
+```
+And don't forget to add your new used metric to the list of used metrics in [constants.py](eval/modules//constants.py):
+```python
+USED_METRICS = ['Pesq', 'Stoi', 'Estoi', 'Mcd', 'Mos', 'x']
+# Added new metric x
+```
+
+Now you have succesfully added a new metric to the evaluation system. Same steps could be taken to remove metrics that you don't consider relevant, outdated, etc.
+The evalaution system will now try to evaluate audios with all selected metrics and return a json file in specified format.
+
+To visualize this metric in the web browser when using the web mode, just add your metric to the allowedMetrics list in [handleAnalysis.js](eval/static/js/handleAnalysis.js):
+```js
+const allowedMetrics = ["Pesq", "Stoi", "Estoi", "Mcd", "Mos", "x"];
+```
+
+This step allows the application to visualize the evaluation of your newly added metric.
+
+## Implementation details
+The evaluation system app is developed as a server application using [Uvicorn](https://www.uvicorn.org/). It is suitable for single user as multiple-user handling wasn't considered. The purpose of this approach is to provide a simple GUI for evaluation and visualization.
+
+The main core of this application is implemented in [eval_dataset.py](eval/modules/eval_dataset.py), where majority of the backend is. The main purpose of this module is to load audios from presented meta file, evaluate them and return results that are later handled in [audioEval.py](eval/audioEval.py).
+
+The whole structure of audio evaluation could be summerize into simple pseudocode:
+```python
+for line in metafile:
+    ref_audio, gen_audio = get_audios(line)
+    results = evaluate_audio(ref_audio, gen_audio)
+
+    return results
+```
+Each evaluation metric is imported as a module from it's own *.py* file located in moudels directory - for example the [pesq](eval/modules/metrics/pesq.py) metric.
+
+### Evaluation
+When using the *web mode* the application fetches results from an endpoint **/start-evaluation/**, defined in [audioEval.py](eval/audioEval.py). The main structure can be seen below:
+```python
+@app.post("/start-evaluation/)
+async def start_evaluation(request)
+    meta_file       = request.meta
+    dataset_path    = request.dataset
+    ...
+    # Check whether meta file and dataset exists
+    if not exists return 400
+    # error while trying to evaluate dataset
+    start_background(eval_dataset, meta_file, dataset)
+    return 200
+    # correct startup
+```
+
+This endpoint is accessed from [handleEval.js](eval/static/js/handleEval.js):
+```js
+function startEvaluation(){
+    meta        = form.meta
+    dataset     = form.dataset
+    ...
+    fetch("/start-evaluation/",{
+        method: "POST",
+        body: {meta, dataset, ...}
+    })
+    .then(response => {
+        //handle response
+        //display evaluation console, start streaming log
+    })
+    .catch(error => {
+        //handle error
+    })
+}
+```
+### Logging mechanism
+The process of evaluation can be analyzed directly in the web - a simple console window is present containing almost real-time logs. The logging mechanism is described bellow:
+```python
+async def log_generator():
+    """
+        Sends logs to frontend
+    """
+    global last_index # list of log messages, on end evaluation - clears
+    current_index = len(log_messages)
+    #Sends only messages that weren't sent
+    if last_index < current_index:
+        for log in log_messages[last_index:]:
+            yield log
+        last_index = current_index
+    await asyncio.sleep(2) # checks every 2 seconds for updates
+
+@app.get("/log-stream/")
+async def stream_logs():
+    """
+        endpoint for log streaming evaluation progress to frontend
+    """
+    return StreamingResponse(log_generator(), media_type="text/event-stream")
+```
+
+The streaming source is then accessed in [handleEval.js](eval/static/js/handleEval.js):
+```js
+function startLogStream() {
+    // connect
+    const eventSource = new EventSource("/log-stream/");
+    eventSource.onmessage = function(event) {
+        //handle new message
+    };
+    eventSource.onerror = function() {
+        // error handling
+    };
+}
+```
+### Evaluation files uploading
+For graphs and tables generation I used [pandas](https://pandas.pydata.org/) library for data manipulation and [seaborn](https://seaborn.pydata.org/) for data visualization.
+The main logic for graphs creation and table values calculation can be seen in [analysis.py](eval/modules/plots/analysis.py). 
+Firstly, files have to be uploaded, logic is described in [handleAnalysis.js](eval/static/js/handleAnalysis.js):
+```js
+document.getElementById("upload-form").addEventListener("submit", async function (event) {
+    files = form.files;
+    // handling files
+    formData = addFiles(files);
+    ...
+    // fetching results
+    try{
+        // uploads json files containing evaluation results and creates a copy
+        let response = await fetch('/upload/', {
+        method: 'POST',
+        body: formData
+        });
+        ...
+        displayAnalysis(); //displays analysis
+    }catch (error){
+        //error handling
+    }
+});
+```
+The endpoint creates copies of all files in a pre-determined directory for easier manipulation and **to show previous analysis even after closing the application**. Thus there is no need to always upload files you want to see the evaluation of.
+```python 
+@app.post("/upload/")
+async def upload_files(files):
+    for file in files:
+        createCopy(file, UPLOAD_PATH)
+        #creates copy
+    return code, valid_files #returns if copies were succesfully created
+    #and valid files list
+```
+### Analysis processing
+Below an endpoint for graphs and tables generation is described:
+```python
+@app.post('/process/')
+async def process_files():
+    result = {
+        #this is json formatted response
+        #contains all files examined - file names are used for titles in graphs
+        #contains paths to generated graphs
+        #contains values for tables (mean, median, min, max)
+    }
+    for file in UPLOADED_FILES:
+        #Goes through all uploaded files
+        for metric in USED_METRICS:
+            #Goes through all allowed metrics
+            data = file[metric]
+            if valid(data): #if valid values (atleast one is not NaN)
+                # creates graphs
+                if graph not exist:
+                    path_to_graphs = analysis(data, metric)
+                else:
+                    path_to_graphs = existing_path_to_graph
+                # gets values
+                values = getTables(data, metric)
+                result.add(values, path_to_graphs)
+
+    return result # return result 
+```
+The graphs and values are then handled in [handleAnalysis.js](eval/static/js/handleAnalysis.js);
+```js
+function displayAnalysis(){
+    try{
+        let processResponse = await fetch('/process/', { method: 'POST' });
+        ...
+        if(response == ok){
+            // if response is ok
+            displayGraphs(processResponse.results);
+            displayTables(processResponse.results.tables);
+        }
+    }catch(error){
+        //error handling
+    }
+}
+```
+### Dynamic section generation
+The sections for each metric are dynamicly generated based on the *.json* file and **allowedMetrics**. A pseudocode below describes how each section is created:
+```js
+const allowedMetrics = ["Pesq", "Mcd", ...]
+function createSection(metric, graphs, values){
+    section = selectMetricSection();
+    newSection = createNewSection(metric);
+    //creates new section with name metric
+    section.add(newSection); //adds new section
+    ...
+    for path in graphs:
+        // creates a new img element
+        graph = createImg(path);
+        newSection.add(graph); //adds graph to the section
+}
+
+function createTables(tables){
+    for table in tables:
+        //for each table (metric) 
+        /*
+        {
+            "Pesq" : {
+                [10, 20, 30, 40],   - table 1 to be displayed in pesq section
+                [50, 60, 70, 80],   - table 2 to be displated in pesq section
+                [mean, median, min, max]
+            },
+            ...
+        }
+        */
+       newTable = createTable(table);
+       addTableToSection(newTable)
+}
+```
+### Sample visualization
+And finally the sample visualization for listening:
+```js
+function displaySamples(){
+    try{
+        let processResponse = await fetch('/audios/', { method: 'POST' });
+        ...
+        if(response == ok){
+            // if response is ok
+            for each sample in samples:
+                createNewAudioElement(sample);
+        }
+    }catch(error){
+        //error handling
+    }
+}
+```
+
+## Literature

@@ -16,6 +16,7 @@ def move_audios(audio_name, audio_path, sample_path, file_name) -> str:
         shutil.copy(audio_path, dst)
 
     return dst
+
 def load_audios(upload_path: str, sample_path):
     samples = {
 
