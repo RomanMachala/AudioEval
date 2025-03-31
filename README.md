@@ -211,10 +211,10 @@ The current state of the evaluation tool utilizes a pre-determined set of evalua
 
 In the [eval_dataset.py](eval/modules/eval_dataset.py) in functions:
 ```python
-def get_audios(params);
+def get_audios(params):
     """Returns audios"""
 
-def eval_audio(params):
+def eval_audios(params):
     """Evaluate audios using selected metrics"""
 
     #add your custom evaluation metric here
