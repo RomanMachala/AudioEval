@@ -4,6 +4,7 @@ _cons_log = 10.0 / np.log(10.0) * np.sqrt(2.0)
 RESULTS_FILE    = "results.json"
 GRAPHS_PATH     = 'static/graphs'
 UPLOAD_PATH     = 'uploads'
+SAMPLES_PATH    = 'static/samples'
 
 PLOTS_RESULT = {
     "Pesq": [],

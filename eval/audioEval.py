@@ -1,3 +1,11 @@
+"""
+    This file contains main logic and endpoints definiton for
+    audio evaluation tool. This project is major part of Bachelor's Thesis at BUT Faculty
+    of information technology - Comparison and analysis of speech synthesizers.
+"""
+__author__      = "Roman Machala"
+__date__        = "31.03.2025"
+__version__     = "0.1"         #stable version
 from fastapi import FastAPI, BackgroundTasks, File, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -5,10 +13,11 @@ from pydantic import BaseModel
 import json
 import os
 import pandas as pd
-from modules.plots.analysis import analysis, table
+from modules.plots.analysis import analysis, table, is_valid
 from modules.eval_dataset import eval_dataset
 from modules.handlers.log_handler import log_messages, log_generator
-from modules.constants import UPLOAD_PATH, GRAPHS_PATH, PLOTS_RESULT, USED_METRICS
+from modules.handlers.samples_handler import load_audios
+from modules.constants import UPLOAD_PATH, GRAPHS_PATH, PLOTS_RESULT, USED_METRICS, SAMPLES_PATH
 import sys
 import copy
 
@@ -68,6 +77,7 @@ async def upload_files(files: list[UploadFile] = File(...)):
         Params:
             files:      contains uploaded files
     """
+    os.makedirs(exist_ok=True, name=UPLOAD_PATH)
     valid_files = list()
     # list for valid files
     # For each file in uploaded files
@@ -96,6 +106,8 @@ async def process_files():
         - processes uplaoded files, generates graphs and returns
             graphs paths for vizualization
     """
+    os.makedirs(exist_ok=True, name=UPLOAD_PATH)
+    os.makedirs(exist_ok=True, name=GRAPHS_PATH)
     # dict for graphs paths
     generated_plots = copy.deepcopy(PLOTS_RESULT)
     # All metrics, that are "valid"
@@ -116,9 +128,11 @@ async def process_files():
             for metric in metrics:
                 if metric in data.columns:
                     plot_path = os.path.join(GRAPHS_PATH, f'{file_name}_{metric}.png')
-                    if analysis(data, metric, plot_path, file_name):
+                    if is_valid(data, metric):
                         web_path = plot_path.replace("static" + os.sep, "/static/")
                         web_path = web_path.replace("\\", "/")
+                        if not os.path.exists(web_path):
+                            analysis(data, metric, plot_path, file_name)
                         values = table(data, metric)
                         if metric != 'Mos':
                             generated_plots['tables']['Values'][metric].append(values)
@@ -140,6 +154,15 @@ async def process_files():
         return JSONResponse(status_code=400, content={"error": "No valid file was processed."})
     # Else returns dictionary containing generated graphs paths
     return {"generated_plots": generated_plots}
+
+@app.post('/audios/')
+async def get_audios():
+    """
+        Endpoint for audio sample loading.
+    """
+    samples = load_audios(UPLOAD_PATH, SAMPLES_PATH)
+
+    return {"samples": samples}
 
 @app.get("/log-stream/")
 async def stream_logs():

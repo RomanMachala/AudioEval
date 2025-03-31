@@ -1,3 +1,10 @@
+"""
+    File containing implementation logic for MCD - Mel Cepstral Distortion metric
+
+    Inspired by: 
+    https://github.com/ttslr/python-MCD
+"""
+
 import numpy as np
 from modules.constants import _cons_log
 

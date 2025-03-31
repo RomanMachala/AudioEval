@@ -105,3 +105,45 @@
 .tables-container p {
     padding: 5%;
 }
+.mos-table-wrapper .tables-container p {
+    padding: 5%;
+}
+
+#samples-section{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#samples-section div{
+    width: 80%;
+    border-bottom: #E4E0E1 solid 0.5px;
+}
+
+#samples-section div h3{
+    padding: 2.5%;
+}
+
+#samples-section div div{
+    width: 100%;
+    padding: 5%;
+    display: flex;
+    flex-wrap: wrap;
+}
+.analysis-back {
+    position: fixed;
+    top: 2%;
+    left: 2%;
+}
+.analysis-back button {
+    background-color: white;
+    border: solid 2px #e7e7e7;
+    padding: 2.5%;
+    border-radius: 10px;
+}
+
+.analysis-back button:hover{
+    background-color: #e7e7e7;
+}

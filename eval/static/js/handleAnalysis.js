@@ -9,23 +9,42 @@
  * 
  */
 
+// Allowed metrics, that are taken into consideration when generating sections
 const allowedMetrics = ["Pesq", "Stoi", "Estoi", "Mcd", "Mos"];
+
+/**
+ * 
+ * @brief simlpe function to hide analysis section and show default selection
+ * 
+ */
 function revert(){
     document.querySelector("#container").style.display = "block";
     document.querySelector(".analysis-section").style.display = "none";
 }
 
+/**
+ * 
+ * @brief simlpe function to hide default section and show analysis section
+ * 
+ */
 function display(){
     document.querySelector("#container").style.display = "none";
     document.querySelector(".analysis-section").style.display = "block";
 }
 
+/**
+ * 
+ * @param flag whether loading previous analysis or creating a new one
+ * 
+ * @brief async function to display analysis, gets graphs, tables and samples to display
+ * 
+ */
 async function displayAnalysis(flag){
     try{
         if(flag){
             showModal("Loading last analysis");
         }
-        display();
+        display(); // shows analysis section
 
         /* Update loading modal */
         updateModalText("Processing files...");
@@ -33,6 +52,8 @@ async function displayAnalysis(flag){
         /* Call endpoint for processing */
         let processResponse = await fetch('/process/', { method: 'POST' });
         let processResult = await processResponse.json();
+
+        getSamples(); // gets audio samples
 
         /* Show graphs and tables */
         if (processResponse.ok) {
@@ -88,17 +109,17 @@ document.getElementById("upload-form").addEventListener("submit", async function
         if (result.valid_files && result.valid_files.length > 0) {
             let validFilesText = "Valid files:\n" + result.valid_files.join("\n");
             updateModalText(validFilesText);
-            displayAnalysis(false);
+            displayAnalysis(false); //displays analysis
         } else {
             updateModalText("No valid files uploaded.");
             alert("No valid files uploaded.");
-            revert();
+            revert(); //hides analysis on fail
             return;
         }
     } catch (error){
         console.error("Error:", error);
         alert("An error occured while uploading files, please check your files and try again.");
-        revert();
+        revert(); //hides analysis on fail
         return
     }
 
@@ -106,9 +127,10 @@ document.getElementById("upload-form").addEventListener("submit", async function
     document.getElementById('file-input').value = '';
 });
 
+// button event listener, displaying previous analysis
 document.getElementById("analysis-button-continue").addEventListener('click', async function(event) {
     event.preventDefault();
-    displayAnalysis(true);
+    displayAnalysis(true); //display previous analysis
 });
 
 /**
@@ -143,8 +165,16 @@ function hideModal() {
     document.getElementById("upload-modal").style.display = "none";
 }
 
+/**
+ * 
+ * @param metric string of use metric - for example Mos, Pesq, etc.
+ * 
+ * @brief creates metric section with graphs and tables
+ * 
+ */
 function createMetricSection(metric){
     if(document.getElementById(`${metric}-section`)){
+        // If this metric already exists, return
         return;
     }
     let section = document.getElementsByClassName("graphs-section")[0];
@@ -156,6 +186,7 @@ function createMetricSection(metric){
     sectionHeader.classList.add('metric-section-header');
     sectionHeader.innerText = metric;
 
+    //Adds event listener for each section, roll-out effect
     sectionHeader.addEventListener("click", function() {
         let content = this.nextElementSibling;
         if (content.style.maxHeight && content.style.maxHeight !== "0px") {
@@ -172,6 +203,7 @@ function createMetricSection(metric){
     const newSectionContainer = document.createElement('div');
     newSectionContainer.classList.add('metric-section-container');
 
+    //adding charts and tables
     const newChartsContainer = document.createElement('div');
     const newTableContainer = document.createElement('div');
     newChartsContainer.classList.add('charts-container');
@@ -253,8 +285,11 @@ function displayTables(tables) {
                 tableWrapper.appendChild(title);
                 // For each table we fill it with values
                 let table = createTable(tables.Files, tables.Values[subMetric]);
-                tableWrapper.appendChild(table);
-
+                if (!table){
+                    tableWrapper.innerHTML = `<p>There was no data provided for ${subMetric} metric due to non-intrusive evaluation only.</p>`;
+                }else{
+                    tableWrapper.appendChild(table);
+                }
                 tablesContainer.appendChild(tableWrapper);
             });
         } else {
@@ -271,11 +306,12 @@ function displayTables(tables) {
 
 /**
  * 
- * @brief Help function for table creation
- * 
  * @param files name of the files
  * @param values metric values
+ * 
  * @returns created table
+ * 
+ * @brief Help function for table creation
  * 
  */
 function createTable(files, values) {
@@ -349,3 +385,80 @@ function formatValue(value) {
     return isNaN(value) ? "N/A" : value.toFixed(2);
 }
 
+/**
+ * 
+ * @brief gets audio samples for each file provided if possible
+ * 
+ */
+async function getSamples() {
+    try{
+        //fetches audio paths
+        let processResponse = await fetch('/audios/', { method: 'POST' });
+        let processResult = await processResponse.json();
+        // if got audio paths
+        if (processResponse.ok) {
+            console.log("Got a positive response for audio samples.");
+            console.log(processResult);
+            displaySamples(processResult.samples);
+            //display them
+        } else {
+            console.log("Got a negative response for audio samples.");
+            return;
+        }
+    }catch (error){
+        console.log(error);
+        return;
+    }finally{
+        console.log("Done getting samples");
+        return;
+    }
+}
+
+/**
+ * 
+ * @param samples samples to be displayed
+ * 
+ * @brief display audio samples for listening
+ * 
+ */
+function displaySamples(samples){
+    for (const [key, value] of Object.entries(samples)){
+        console.log(`${key}: ${value}`);
+        createSamplesSection(value, key); // for each file(key) -> display all samples
+    }
+}
+
+/**
+ * 
+ * @param samples audio sample paths
+ * @param label model name/file name
+ * 
+ * @brief creates section for each model/file presented and shows samples
+ * 
+ */
+function createSamplesSection(samples, label){
+    if (document.getElementById(label)){
+        //if section exists return
+        return;
+    }
+    let samplesSection = document.getElementById('samples-section');
+
+    const newSection = document.createElement('div');
+    newSection.id = label;
+    const newHeader = document.createElement('h3');
+    newHeader.innerText = label;
+    const newSamplesSection = document.createElement('div');
+    // for each sample create audio element
+    samples.forEach(sample =>{
+        var newSample = document.createElement('audio');
+        newSample.controls = 'controls';
+        newSample.src = sample;
+        newSample.type = 'audio/mpeg'
+        newSamplesSection.appendChild(newSample);
+    });
+
+    newSection.appendChild(newHeader);
+    newSection.appendChild(newSamplesSection);
+
+    samplesSection.appendChild(newSection);
+}

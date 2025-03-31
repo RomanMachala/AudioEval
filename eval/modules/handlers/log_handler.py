@@ -1,3 +1,6 @@
+"""
+    This file contains logging logic for displaying progress of evaluation.
+"""
 import asyncio
 import sys
 import json
@@ -46,6 +49,7 @@ def save_results(data, file_name:str):
 
         Params:
             data:       data to be saved
+            file_name:  name of the file
     """
     with open(file_name, "w") as f:
         # opens file and dumps content
@@ -57,6 +61,9 @@ def convert(obj):
 
         Params:
             obj:        object to be converted
+        
+        Returns:
+            converted object
     """
     if isinstance(obj, (np.float32, np.float64, np.int32, np.int64)):
         return obj.item()

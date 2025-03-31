@@ -4,9 +4,9 @@ This script was created as a part of Bachelor's thesis of
 Roman Mahala at VUT Brno.
 """
 
-__author__  = "Roman Machala"
-__date__    = "14.12.2024"
-__version__ = "0.1"
+__author__      = "Roman Machala"
+__date__        = "14.12.2024"
+__version__     = "0.1"
 
 import numpy as np
 from scipy.io import wavfile
