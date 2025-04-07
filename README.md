@@ -1,6 +1,6 @@
 # Audio Evaluation Tool
 This project was developed as major part of a Bachelor's Thesis at Brno University of Technoloogy, Faculty of information technology - Comparison and analysis of speech synthesizers.
-The author of this project and said Bachelor's theis is Roman Machala.
+The author of this project and said Bachelor's thesis is Roman Machala.
 
 ## Table of contents
 - [Foreword](#foreword)
@@ -49,12 +49,20 @@ When using intrusive evaluation:
 - compares reference and generated samples
     - make sure that you have your meta file set up correctly
     - make sure to use the exact transcriptions in reference and generated samples as different ones negatively affect results
-> **_NOTE:_** The intrusive evaluation compares the quality of the reference audio sample to the quality of the generated sample. Based on the quality difference - intelligibility, etc., could be affected. This scenario is aimed explicitly at zero-shot systems, where you provide a reference sample of a speaker you want to match. High-quality synthesized audio is expected when providing a high-quality reference sample with the exact transcription. Thus, in this use case, the intrusive evaluation measures the capabilities of zero-shot systems to produce high-quality audio samples by comparing the reference and generated samples.
+
+**Also when making conclusions, make sure to make those conslusions based on several metrics - all metrics should be taken into consideration.**
+- for example, an intrusive metric comparing generated audio's quality to a reference one showcasing worsened quality of a generated one doesn't mean the audio is low-quality or bad. The audio may perform well in non-intrusive evaluation. Such example can occur when generated audio's quality is lower than reference one because the audio contains artefacts, but the audio could still be intelligible with minimal distortions when listening to. This scenario could be interpreted in a way, that the system's ability to produce high-quality (or atleast quality close to the dataset's it was trained on) is limited, but the audio can still be good.
+>**_NOTE:_** The intrusive evaluation compares generated audio to its reference one. The result of this evalaution is a value indicating audio quality of generated sample compared to the reference one. Intrusive metrics can be used to assess systems' ability to generate high-quality. 
+>**_Possible usecases_**:
+>- Zero-shot systems - let's say you have a dataset consisting of *x* audio samples of a single speaker. Take one sample out of this dataset and use this sample as a reference (to extract speaker embedings used in zero-shot synthesis). This sample will be used as a reference for the system to generate new samples with transcriptions matching the remaining *x - 1* samples left in your dataset. These left over audios will be your reference samples and generated ones will be generated samples in intrusive evalaution.
+>- Single speaker models - you have a dataset consisting of *x* audio samples of a single speaker that were not used in training for the single speaker model you are using and the spekars matches in both your dataset and in used model. Generate *x* audio samples using the model with transcriptions matching the "human-made" dataset, which will serve as reference samples to your generated ones.
+>*The aim of these scenarios would be to compare the ability of the system pro produce high-quality audio*
+>**The metrics in these scenarios would showcase how much the generated audios differ from a reference, human-made ones**
 #### Used intrusive metrics
 The intrusive metrics used in this system are:
 - PESQ - available at: https://pypi.org/project/pesq/
 - STOI and ESTOI - available at: https://pypi.org/project/pystoi/
-- MCD - available at: https://github.com/ttslr/python-MCD
+- MCD - available at: https://github.com/jasminsternkopf/mel_cepstral_distance
 
 When comparing audio, they must be aligned first since the TTS system can produce faster/slower speech, different intonation, etc, which could negatively affect the evaluation. A FastDTW - Dynamic Time Warping function was used to align these audios, available at: https://pypi.org/project/fastdtw/.
 
@@ -75,6 +83,11 @@ conda create --name AudioEval
 conda activate AudioEval
 pip install -r requirements.txt
 ```
+And after that install the mel-cepstral-dostortion library
+```
+pip install git+https://github.com/jasminsternkopf/mel_cepstral_distance.git
+```
+
 ## Usage
 The system can be started in two modes:
 - **command line mode** - starts evaluation and provides a result file in json format 
@@ -174,15 +187,17 @@ The result of this system is then stored in a json file with format:
     "results": [
         {
             "file": "sample_01.wav",
-            "Mcd": xy,
-            "Pesq": xy,
-            "Stoi": xy,
-            "Estoi": xy,
-            "Mos": {
-                "ovrl_mos": xy,
-                "sig_mos": xy,
-                "bak_mos": xy,
-                "p808_mos": xy
+            "metrics":{
+                "Mcd": xy,
+                "Pesq": xy,
+                "Stoi": xy,
+                "Estoi": xy,
+                "Mos": {
+                    "ovrl_mos": xy,
+                    "sig_mos": xy,
+                    "bak_mos": xy,
+                    "p808_mos": xy
+                }
             }
         }
     ]
@@ -194,6 +209,8 @@ When using the web mode for this system, all results can be visualized directly 
 
 For each file containing evalaution a set of graphs are generated for each metric available. For example a graph for non-intrusive evaluation (only MOS) can be seen below.
 ![figs/example_graph.png](figs/example_graph.png)
+
+For metrics containing no values, no graphs are generated. Such as when using only non-intrusive evaluation, no graphs will be generated for intrusive metrics. Only a informational message that no valid values were found would be shown.
 ### Tables section
 Besides graphs a set of tables is generatd containig fundamental statistical values for easy intepretation. Reagrding MOS - returning four MOS scores for each audio, for each MOS score a table is generated. The format of all tables can be seen below.
 | File | Mean | Median | Min | Max |
@@ -208,6 +225,9 @@ To properly select these audios, it is crucial to leave the dataset stored at th
 
 ## Adaptability
 The current state of the evaluation tool utilizes a pre-determined set of evaluation metrics. These metrics can be changed, as well as visualization results. If you want to add a new evaluation metric or remove old one - for example beacause it may be outdated, present irrelevant data, just follow the simple steps described below.
+
+> **_NOTE:_** make sure to use only evaluation results that have the matching set of evaluation metrics. 
+*For example: when making an assessment, then adding a new metric and making another assessment, the visualization might not work in this scenario.*
 
 In the [eval_dataset.py](eval/modules/eval_dataset.py) in functions:
 ```python
@@ -228,18 +248,22 @@ def process_line(params):
     # Get audio eval results with new metric added (x)
     results = {
         "file": audios,
-        "Mcd": float(mcd),
-        "Pesq": float(pesq),
-        "Stoi": float(stoi),
-        "Estoi": float(estoi),
-        "Mos": convert(mos), #handles correct object converting
-        "x": float(x)
+        "metrics":{
+            "Mcd": mcd if mcd else None,
+            "Pesq": pesq if pesq else None,
+            "Stoi": stoi if stoi else None,
+            "Estoi": estoi if estoi else None,
+            "Mos": mos if mos else None,
+            "x": x if x else one # added new metric to the results
+        }
     }
     return results # returns audio assessment results with new metric (x)
 ```
 This code above lets you add new functionality to the system - you can add new metrics, remove old ones, adjust them to your needs.
 
-Next step is to change the json file structure in [constants.py](eval/modules//constants.py) to generate graphs and create tables for this new metric:
+In the [constants.py](eval/modules//constants.py) file is a predetermined structure for analysis result. When adding new metrics to the system **no adjustment is needed**, this structure serves as a backbone to show sections for these metrics even when no values are presented, even when removing the functions calls for these metrics. To remove those metrics entirely, just remove their mentions in this structure.
+
+**All new metrics are added dynamically after finishing previous step** (adding function call and adding the result value to the *result* dictionary)
 ```json
 PLOTS_RESULT = {
     "Pesq": [],
@@ -247,7 +271,6 @@ PLOTS_RESULT = {
     "Estoi": [],
     "Mcd": [],
     "Mos": [],
-    "x": [],            - for graph generation  
     "tables": {
         "Files": [],
         "Values": {
@@ -259,26 +282,11 @@ PLOTS_RESULT = {
             "sig_mos" : [],
             "bak_mos": [],
             "p808_mos": [],
-            "x": []     - for table generation
         }
     },
 }
 ```
-And don't forget to add your new used metric to the list of used metrics in [constants.py](eval/modules//constants.py):
-```python
-USED_METRICS = ['Pesq', 'Stoi', 'Estoi', 'Mcd', 'Mos', 'x']
-# Added new metric x
-```
-
-Now you have succesfully added a new metric to the evaluation system. Same steps could be taken to remove metrics that you don't consider relevant, outdated, etc.
-The evalaution system will now try to evaluate audios with all selected metrics and return a json file in specified format.
-
-To visualize this metric in the web browser when using the web mode, just add your metric to the allowedMetrics list in [handleAnalysis.js](eval/static/js/handleAnalysis.js):
-```js
-const allowedMetrics = ["Pesq", "Stoi", "Estoi", "Mcd", "Mos", "x"];
-```
-
-This step allows the application to visualize the evaluation of your newly added metric.
+The visualization is then based on the presented *json* result file, thus **no adjustment is needed**.
 
 ## Implementation details
 The evaluation system app is developed as a server application using [Uvicorn](https://www.uvicorn.org/). It is suitable for single user as multiple-user handling wasn't considered. The purpose of this approach is to provide a simple GUI for evaluation and visualization.
@@ -337,7 +345,7 @@ async def log_generator():
     """
         Sends logs to frontend
     """
-    global last_index # list of log messages, on end evaluation - clears
+    global last_index # last index
     current_index = len(log_messages)
     #Sends only messages that weren't sent
     if last_index < current_index:
@@ -414,7 +422,7 @@ async def process_files():
     }
     for file in UPLOADED_FILES:
         #Goes through all uploaded files
-        for metric in USED_METRICS:
+        for metric in file['metrics']:
             #Goes through all allowed metrics
             data = file[metric]
             if valid(data): #if valid values (atleast one is not NaN)
@@ -437,8 +445,8 @@ function displayAnalysis(){
         ...
         if(response == ok){
             // if response is ok
-            displayGraphs(processResponse.results);
-            displayTables(processResponse.results.tables);
+            displayGraphs(graphs);
+            displayTables(tables);
         }
     }catch(error){
         //error handling
@@ -496,4 +504,4 @@ function displaySamples(){
 }
 ```
 
-## Literature
+## TODO
