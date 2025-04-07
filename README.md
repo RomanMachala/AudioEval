@@ -109,7 +109,7 @@ The system expects a meta file (and optionally a path to a dataset).
 #### Examples of structure
 This section shows examples of structures of datasets for intrusive and non-intrusive evaluations.
 
-### Intrusive evaluation structure
+#### Intrusive evaluation structure
 The dataset structure could be as follows:
 ```
 dataset/
@@ -140,7 +140,7 @@ If using absolute paths in meta file, the structure should be:
     ...
 ```
 
-### Non-intrusive evaluation structure
+#### Non-intrusive evaluation structure
 The dataset structure could be as follows:
 ```
 dataset/
@@ -211,10 +211,10 @@ The current state of the evaluation tool utilizes a pre-determined set of evalua
 
 In the [eval_dataset.py](eval/modules/eval_dataset.py) in functions:
 ```python
-def get_audios(params);
+def get_audios(params):
     """Returns audios"""
 
-def eval_audio(params):
+def eval_audios(params):
     """Evaluate audios using selected metrics"""
 
     #add your custom evaluation metric here
