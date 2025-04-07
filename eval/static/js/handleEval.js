@@ -41,6 +41,7 @@ function startEvaluation() {
             /* Hide select container and show evaluation progress */
             document.getElementById("evaluation").style.display = "block";
             document.getElementById("container").style.display = "none";
+            disableButtonEvaluation();
             startLogStream(); /* Streaming of logs */
         } else {
             /* If eval hasn't started correctly atleast let know */
@@ -63,10 +64,10 @@ function startLogStream() {
     const eventSource = new EventSource("/log-stream/");
     /* On new incoming message */
     eventSource.onmessage = function(event) {
-        logOutput.textContent += event.data + "\n";
-        logOutput.scrollTop = logOutput.scrollHeight;
+        
+        handleLog(event.data, logOutput);
         if (event.data === "Evaluation completed.") {
-            console.log("Evaluation completed, disconnecting.");
+            enableButtonEvaluation();
             eventSource.close();
         }
         /* Append message to the "console" and scroll to last message */
@@ -79,3 +80,78 @@ function startLogStream() {
     };
 }
 
+/**
+ * 
+ * @param message received message
+ * @param section section to display the message
+ * 
+ * @brief handles incoming messages and displays them in more structured way
+ * 
+ */
+function handleLog(message, section){
+    try {
+        const fixedMessage = message
+            .replace(/'/g, '"')
+            .replace(/\bNone\b/g, 'null');
+        const data = JSON.parse(fixedMessage);
+        section.textContent += "Files: " + data.file + "\n";
+        Object.entries(data.metrics).forEach(([metricName, values]) => {
+            if(metricName === "Mos"){
+                section.textContent += "Mos:\n";
+                Object.entries(data.metrics.Mos).forEach(([subMetric, value]) => {
+                    section.textContent += "\t" + subMetric + ": " + value + "\n";
+                });
+            }
+            else{
+                section.textContent += metricName + ": " + values + "\n";
+            }
+        });
+        section.textContent += "\n";
+        section.scrollTop = section.scrollHeight;
+    } catch (error) {
+        section.textContent += message + "\n";
+    }
+}
+
+/**
+ * 
+ * @brief clears form's inputs for evaluation
+ * 
+ */
+function clearInputs(){
+    document.getElementById("meta-file").value = "";
+    document.getElementById("dataset-path").value = "";
+    document.getElementById("intrusive").checked = false;
+    document.getElementById("save-name").value = "";
+}
+
+/**
+ * 
+ * @brief Enables button to continue after finishing evaluation
+ * 
+ */
+function enableButtonEvaluation(){
+    document.getElementById("evaluation-done").disabled = false;
+}
+
+/**
+ * 
+ * @brief Disables button to continue during evalaution
+ * 
+ */
+function disableButtonEvaluation(){
+    document.getElementById("evaluation-done").disabled = true;
+}
+
+/**
+ * 
+ * @brief handles continue button after finishing evalaution
+ * 
+ */
+document.getElementById("evaluation-done").addEventListener("click", function (event){
+    event.preventDefault();
+    clearInputs();
+
+    document.querySelector("#evaluation").style.display = "none";
+    document.querySelector("#container").style.display = "block";
+});

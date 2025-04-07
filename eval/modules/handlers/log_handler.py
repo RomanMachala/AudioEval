@@ -20,7 +20,7 @@ async def log_generator():
             last_log_index = 0
         if last_log_index < current_length:
             for log in log_messages[last_log_index:]:
-                yield f"data: {log}\n\n"
+                yield f"data: {convert(log)}\n\n"
             last_log_index = len(log_messages)
 
         await asyncio.sleep(2)
@@ -65,8 +65,9 @@ def convert(obj):
         Returns:
             converted object
     """
-    if isinstance(obj, (np.float32, np.float64, np.int32, np.int64)):
+    if isinstance(obj, dict):
+        return {k: convert(v) for k, v in obj.items()}
+    elif isinstance(obj, np.generic):
         return obj.item()
-    elif isinstance(obj, np.ndarray):
-        return obj.tolist()
-    return obj
+    else:
+        return obj

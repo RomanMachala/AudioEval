@@ -9,8 +9,6 @@
  * 
  */
 
-// Allowed metrics, that are taken into consideration when generating sections
-const allowedMetrics = ["Pesq", "Stoi", "Estoi", "Mcd", "Mos"];
 
 /**
  * 
@@ -57,7 +55,7 @@ async function displayAnalysis(flag){
 
         /* Show graphs and tables */
         if (processResponse.ok) {
-            displayGraphs(processResult.generated_plots);
+            displayGraphs(processResult.generated_plots.plots);
             displayTables(processResult.generated_plots.tables);
             console.log(processResult.generated_plots);
         } else {
@@ -227,7 +225,6 @@ function createMetricSection(metric){
 function displayGraphs(graphs) {
     console.log(graphs);
     for (const [metric, paths] of Object.entries(graphs)) {
-        if (!allowedMetrics.includes(metric)) continue;
         /* Select corresponding HTML element based on metric */
         console.log(metric);
         createMetricSection(metric);
@@ -255,6 +252,7 @@ function displayGraphs(graphs) {
  * 
  */
 function displayTables(tables) {
+    let count = 0;
     const mosLabels = {
         "ovrl_mos": "Overall MOS",
         "sig_mos": "Signal MOS",
@@ -262,43 +260,51 @@ function displayTables(tables) {
         "p808_mos": "P808 MOS"
     };
     // Iterates through each section
-    allowedMetrics.forEach(metric => {
-        let section = document.getElementById(`${metric}-section`);
-        if (!section) {
-            console.warn(`No section for ${metric} metric.`);
-            return;
-        }
-
-        let tablesContainer = section.querySelector(".tables-container");
-        tablesContainer.innerHTML = ""; // Removes previous tables
-
-        if (metric === "Mos") {
-            // If the metric is mos, then we create 4 separate tables
-            Object.entries(mosLabels).forEach(([subMetric, label]) => {
-                if (!tables.Values[subMetric]) return;
-
+    Object.entries(tables.Values).forEach(([metricName, metric]) => {
+        if (!metric) return;
+        if(metricName in mosLabels){
+                let section = document.getElementById('Mos-section');
+                if (!section) {
+                    console.warn(`No section for ${metricName} metric.`);
+                    return;
+                }
+                let tablesContainer = section.querySelector(".tables-container");
+                if (count === 0){
+                    tablesContainer.innerHTML = ""; // Removes previous tables
+                }
+                count += 1;
                 let tableWrapper = document.createElement("div");
                 tableWrapper.classList.add("mos-table-wrapper");
 
                 let title = document.createElement("h4");
-                title.innerText = label;
+                title.innerText = mosLabels[metricName];
                 tableWrapper.appendChild(title);
                 // For each table we fill it with values
-                let table = createTable(tables.Files, tables.Values[subMetric]);
+                console.log("Creating table for ");
+                console.log(metricName);
+                let table = createTable(tables.Files, tables.Values[metricName]);
                 if (!table){
-                    tableWrapper.innerHTML = `<p>There was no data provided for ${subMetric} metric due to non-intrusive evaluation only.</p>`;
+                    tableWrapper.innerHTML = `<p>There was no data provided for ${metricName} metric due to non-intrusive evaluation only.</p>`;
                 }else{
                     tableWrapper.appendChild(table);
                 }
                 tablesContainer.appendChild(tableWrapper);
-            });
-        } else {
+        }else{
+            let section = document.getElementById(`${metricName}-section`);
+            if (!section) {
+                console.warn(`No section for ${metricName} metric.`);
+                return;
+            }
+            let tablesContainer = section.querySelector(".tables-container");
+            tablesContainer.innerHTML = ""; // Removes previous tables
+
+    
             //Other metrics have only one table
-            let table = createTable(tables.Files, tables.Values[metric]);
+            let table = createTable(tables.Files, tables.Values[metricName]);
             if(table){
                 tablesContainer.appendChild(table);
             }else{
-                tablesContainer.innerHTML = `<p>There was no data provided for ${metric} metric due to non-intrusive evaluation only.</p>`;
+                tablesContainer.innerHTML = `<p>There was no data provided for ${metricName} metric due to non-intrusive evaluation only.</p>`;
             }
         }
     });
@@ -441,6 +447,7 @@ function createSamplesSection(samples, label){
         //if section exists return
         return;
     }
+
     let samplesSection = document.getElementById('samples-section');
 
     const newSection = document.createElement('div');
@@ -448,6 +455,7 @@ function createSamplesSection(samples, label){
     const newHeader = document.createElement('h3');
     newHeader.innerText = label;
     const newSamplesSection = document.createElement('div');
+
     // for each sample create audio element
     samples.forEach(sample =>{
         var newSample = document.createElement('audio');
@@ -456,7 +464,9 @@ function createSamplesSection(samples, label){
         newSample.type = 'audio/mpeg'
         newSamplesSection.appendChild(newSample);
     });
-
+    if(!samples || samples.length === 0){
+        newSamplesSection.innerHTML = '<p>Audio samples could not be loaded, please check your paths.<p>';
+    }
     newSection.appendChild(newHeader);
     newSection.appendChild(newSamplesSection);
 

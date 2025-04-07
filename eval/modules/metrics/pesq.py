@@ -7,9 +7,8 @@ import numpy as np
 
 class PesqEvaluationError(Exception):
     """An error has occured during PESQ evaluation"""
-    pass
 
-def eval_pesq(ref_audio: np.ndarray, gen_audio: np.ndarray, rate: int) -> float:
+def eval_pesq(ref_audio: np.array, gen_audio: np.array, rate: int) -> float:
     """
     Evaluates audios using PESQ method.
 
@@ -20,6 +19,6 @@ def eval_pesq(ref_audio: np.ndarray, gen_audio: np.ndarray, rate: int) -> float:
     """
     try:
         # Either pesq or pesq_batch (pesq_batch uses multiple cores)
-        return pesq(rate, ref_audio, gen_audio, 'nb')  # 'nb' indicates narrowband mode
+        return pesq(fs=rate, ref=ref_audio, deg=gen_audio, mode='wb')
     except Exception as e:
         raise PesqEvaluationError

@@ -17,7 +17,7 @@ from modules.plots.analysis import analysis, table, is_valid
 from modules.eval_dataset import eval_dataset
 from modules.handlers.log_handler import log_messages, log_generator
 from modules.handlers.samples_handler import load_audios
-from modules.constants import UPLOAD_PATH, GRAPHS_PATH, PLOTS_RESULT, USED_METRICS, SAMPLES_PATH
+from modules.constants import UPLOAD_PATH, GRAPHS_PATH, PLOTS_RESULT, SAMPLES_PATH
 import sys
 import copy
 
@@ -110,8 +110,6 @@ async def process_files():
     os.makedirs(exist_ok=True, name=GRAPHS_PATH)
     # dict for graphs paths
     generated_plots = copy.deepcopy(PLOTS_RESULT)
-    # All metrics, that are "valid"
-    metrics = USED_METRICS
 
         # Goes through all files in upload path folder
     for filename in os.listdir(UPLOAD_PATH):
@@ -121,12 +119,18 @@ async def process_files():
                 # Gets file content
                 raw_data = json.load(f)
             # Creates dataframe
-            data = pd.DataFrame(raw_data['results'])
+            rows = []
+            for file, metrics in [(i['file'], i['metrics']) for i in raw_data['results']]:
+                metrics['file'] = file
+                rows.append(metrics)
+
+            data = pd.DataFrame(rows)
             file_name = os.path.splitext(filename)[0]
             # For each metric that is in column of said dataframe
             # creates a graph and adds it into the dict
-            for metric in metrics:
-                if metric in data.columns:
+            print(data.columns)
+            for metric in data.columns:
+                if metric != 'file':
                     plot_path = os.path.join(GRAPHS_PATH, f'{file_name}_{metric}.png')
                     if is_valid(data, metric):
                         web_path = plot_path.replace("static" + os.sep, "/static/")
@@ -135,17 +139,23 @@ async def process_files():
                             analysis(data, metric, plot_path, file_name)
                         values = table(data, metric)
                         if metric != 'Mos':
+                            if metric not in generated_plots['tables']['Values']:
+                                generated_plots['tables']['Values'][metric] = list()
                             generated_plots['tables']['Values'][metric].append(values)
                         else:
                             generated_plots['tables']['Values']['ovrl_mos'].append(values[0])
                             generated_plots['tables']['Values']['sig_mos'].append(values[1])
                             generated_plots['tables']['Values']['bak_mos'].append(values[2])
                             generated_plots['tables']['Values']['p808_mos'].append(values[3])
-                        generated_plots['tables']['Files'].append(file_name)
+                        print("appended new file name")
+                        if file_name not in generated_plots['tables']['Files']:
+                            generated_plots['tables']['Files'].append(file_name)
                     else:
                         web_path = "null"
                     # adds generated graph path to corresponding metric in dict
-                    generated_plots[metric].append(web_path)
+                    if metric not in generated_plots['plots']:
+                        generated_plots['plots'][metric] = list()
+                    generated_plots['plots'][metric].append(web_path)
         except ValueError:
             #TODO better handling, if and exception occurs skips it
             continue

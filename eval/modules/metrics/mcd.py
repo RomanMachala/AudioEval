@@ -1,25 +1,21 @@
 """
-    File containing implementation logic for MCD - Mel Cepstral Distortion metric
-
-    Inspired by: 
-    https://github.com/ttslr/python-MCD
+    Mel-Cepstral Distortion metric
+    Original work: 
+    https://github.com/jasminsternkopf/mel_cepstral_distance
 """
+from mel_cepstral_distance import compare_audio_files
 
-import numpy as np
-from modules.constants import _cons_log
-
-
-def eval_mcd(ref: np.ndarray, gen: np.ndarray) -> float:
+def eval_mcd(ref: str, gen: str) -> float:
     """
-    Function to compute MCD on alligned MGC
+        Evaluates audios using mel-cepstral-distortion metric
 
-    Params:
-        ref     : reference audio MGC 
-        gen     : generated audio MGC
+        Params:
+            ref:            reference audio path
+            gen:            generated audio path
+
+        Returns:
+            MCD value in dB
     """
-    frames = ref.shape[0]
-    z = ref - gen
-    s = np.sqrt((z * z).sum(-1)).sum()
-    mcd = _cons_log * float(s) / float(frames)
+    mcd, _ = compare_audio_files(ref, gen)
 
     return mcd
