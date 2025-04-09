@@ -47,3 +47,15 @@
     overflow: auto;
     font-size: 17pt;
 }
+
+#evaluation-done {
+    background-color: white;
+    border: solid 2px #e7e7e7;
+    padding: 2.5%;
+    border-radius: 10px;
+    padding: 10px
+}
+
+#evaluation-done:hover {
+    background-color: #e7e7e7;
+}
