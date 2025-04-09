@@ -17,8 +17,8 @@ def handle_filename(filename: str, datasetpath: str) -> str:
             path to the sample or None if not exists
     """
     try:
-        if ' ' in filename:
-            ref, gen = filename.split(' ')
+        if " " in filename:
+            ref, gen = filename.split(" ")
         else:
             gen = filename
         
@@ -90,8 +90,8 @@ def load_audios(upload_path: str, sample_path:str):
                 temp = move_audios(audio_name, audio_path, sample_path, file_name)
                 web_path = temp.replace('\\', '/')
             if i == 0:
-                samples[f'{file.split('.')[0]}'] = list()
+                samples[f"{file.split('.')[0]}"] = list()
             if web_path:
-                samples[f'{file.split('.')[0]}'].append(web_path)
+                samples[f"{file.split('.')[0]}"].append(web_path)
 
     return samples
