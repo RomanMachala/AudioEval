@@ -3,6 +3,10 @@ results.json
 OpenVoice.json
 testing.json
 meta.txt
-uploads/*
-static/graphs/*
-static/samples/*
+uploads/
+static/graphs/
+static/samples/
+__pycache__/
+modules/__pycache__/
+modules/handlers/__pycache__/
+modules/metrics/__pycache__/

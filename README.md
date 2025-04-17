@@ -42,6 +42,10 @@ This system evaluates audio in intrusive and non-intrusive ways:
 
 ![Evalaution flow chart](figs/evaluation_flow.svg)
 
+When performing evaluation, the analysis section for evaluated dataset is generated automatically. The application offers to display different evalautions made by other users by sharing the result.json file and uploading it. 
+
+The evaluation can be done using the web mode interface, which requires uploading the dataset with meta file or by using simple attached script, which produces only the result file which can be later displayed by uploading the result file.
+
 ### Intrusive evaluation
 When performing an intrusive evaluation, the non-intrusive assessment is performed as well.
 
@@ -56,7 +60,7 @@ When using intrusive evaluation:
 >**_Possible usecases_**:
 >- Zero-shot systems - let's say you have a dataset consisting of *x* audio samples of a single speaker. Take one sample out of this dataset and use this sample as a reference (to extract speaker embedings used in zero-shot synthesis). This sample will be used as a reference for the system to generate new samples with transcriptions matching the remaining *x - 1* samples left in your dataset. These left over audios will be your reference samples and generated ones will be generated samples in intrusive evalaution.
 >- Single speaker models - you have a dataset consisting of *x* audio samples of a single speaker that were not used in training for the single speaker model you are using and the spekars matches in both your dataset and in used model. Generate *x* audio samples using the model with transcriptions matching the "human-made" dataset, which will serve as reference samples to your generated ones.
->*The aim of these scenarios would be to compare the ability of the system pro produce high-quality audio*
+>*The aim of these scenarios would be to compare the ability of the system pro produce audio with characteristics matching dataset's characteristics*
 >**The metrics in these scenarios would showcase how much the generated audios differ from a reference, human-made ones**
 #### Used intrusive metrics
 The intrusive metrics used in this system are:
@@ -116,9 +120,8 @@ To start evaluation in **web mode** just simply use this command:
 ```
 The application will then be available at https://localhost:8000
 ## Input structure
-The system expects a meta file (and optionally a path to a dataset).
+The system expects a meta file and audio samples.
 
-**If the dataset path is not specified, the metafile must have absolute paths**
 #### Examples of structure
 This section shows examples of structures of datasets for intrusive and non-intrusive evaluations.
 
@@ -145,13 +148,6 @@ audios_ref/sample_02.wav audios_gen/sample_02.wav
 audios_ref/sample_03.wav audios_gen/sample_03.wav
     ...
 ```
-If using absolute paths in meta file, the structure should be:
-```
-/dataset_path/audios_ref/sample_01.wav /dataset_path/audios_gen/sample_01.wav
-/dataset_path/audios_ref/sample_02.wav /dataset_path/audios_gen/sample_02.wav
-/dataset_path/audios_ref/sample_03.wav /dataset_path/audios_gen/sample_03.wav
-    ...
-```
 
 #### Non-intrusive evaluation structure
 The dataset structure could be as follows:
@@ -171,22 +167,17 @@ audios/sample_02.wav
 audios/sample_03.wav
     ...
 ```
-If using absolute paths in meta file, the structure should be:
-```
-/dataset_path/audios/sample_01.wav
-/dataset_path/audios/sample_02.wav
-/dataset_path/audios/sample_03.wav
-    ...
-```
+
 ## Output structure
 The result of this system is then stored in a json file with format:
 ```
 {
     "status": "completed",
     "path": "/dataset_path",
+    "intrusive": false,
     "results": [
         {
-            "file": "sample_01.wav",
+            "file": "audios/sample_01.wav",
             "metrics":{
                 "Mcd": xy,
                 "Pesq": xy,
@@ -219,9 +210,6 @@ Besides graphs a set of tables is generatd containig fundamental statistical val
 
 ### Audio section
 For each *.json* file containing results of evaluation a set of audios is selected and displayed through the application for listening. 
-
-
-To properly select these audios, it is crucial to leave the dataset stored at the same path that was used during evaluation. **After first analysis - uploading the json file, it is safe to relocate datasets, as copies of selected audios are made**.
 
 ## Adaptability
 The current state of the evaluation tool utilizes a pre-determined set of evaluation metrics. These metrics can be changed, as well as visualization results. If you want to add a new evaluation metric or remove old one - for example beacause it may be outdated, present irrelevant data, just follow the simple steps described below.

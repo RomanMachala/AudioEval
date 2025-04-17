@@ -138,7 +138,7 @@ document.getElementById("analysis-button-continue").addEventListener('click', as
  * @brief function to show modal window while fetching results
  * 
  */
-function showModal(text) {
+export function showModal(text) {
     document.getElementById("upload-modal-text").innerText = text;
     document.getElementById("upload-modal").style.display = "flex";
 }
@@ -150,7 +150,7 @@ function showModal(text) {
  * @brief function to update modal window
  * 
  */
-function updateModalText(text) {
+export function updateModalText(text) {
     document.getElementById("upload-modal-text").innerText = text;
 }
 
@@ -159,7 +159,7 @@ function updateModalText(text) {
  * @brief function to hide modal
  * 
  */
-function hideModal() {
+ export function hideModal() {
     document.getElementById("upload-modal").style.display = "none";
 }
 
@@ -363,8 +363,6 @@ function createTable(files, values) {
  * 
  */
 function goBackToSelect() {
-    console.log("Back button clicked!");
-    /* Debugging */
 
     let container = document.querySelector("#container");
     let analysisSection = document.querySelector(".analysis-section");
@@ -379,6 +377,16 @@ function goBackToSelect() {
         /* Debugging */
     }
 }
+
+/**
+ * 
+ * Event listener for switching between analysis section and section to choose options.
+ * 
+ */
+document.getElementById("back-button").addEventListener("click", function (event){
+    event.preventDefault();
+    goBackToSelect();
+});
 
 /**
  * 
@@ -427,48 +435,100 @@ async function getSamples() {
  * @brief display audio samples for listening
  * 
  */
-function displaySamples(samples){
-    for (const [key, value] of Object.entries(samples)){
-        console.log(`${key}: ${value}`);
-        createSamplesSection(value, key); // for each file(key) -> display all samples
+function displaySamples(samples) {
+    const samplesContainer = document.getElementById("samples-section");
+    samplesContainer.innerHTML = "";
+
+    for (const [filename, types] of Object.entries(samples)) {
+        createSamplesSection(types, filename);
     }
 }
 
+
 /**
  * 
- * @param samples audio sample paths
+ * @param types sample types - ref and gen lists containing audio sample paths
  * @param label model name/file name
  * 
  * @brief creates section for each model/file presented and shows samples
  * 
  */
-function createSamplesSection(samples, label){
-    if (document.getElementById(label)){
-        //if section exists return
+function createSamplesSection(types, label) {
+    if (document.getElementById(label)) {
         return;
     }
 
-    let samplesSection = document.getElementById('samples-section');
+    const samplesSection = document.getElementById('samples-section');
 
     const newSection = document.createElement('div');
     newSection.id = label;
+    newSection.classList.add("main-sample-section");
+
     const newHeader = document.createElement('h3');
     newHeader.innerText = label;
-    const newSamplesSection = document.createElement('div');
-
-    // for each sample create audio element
-    samples.forEach(sample =>{
-        var newSample = document.createElement('audio');
-        newSample.controls = 'controls';
-        newSample.src = sample;
-        newSample.type = 'audio/mpeg'
-        newSamplesSection.appendChild(newSample);
-    });
-    if(!samples || samples.length === 0){
-        newSamplesSection.innerHTML = '<p>Audio samples could not be loaded, please check your paths.<p>';
-    }
     newSection.appendChild(newHeader);
-    newSection.appendChild(newSamplesSection);
+
+    for (const [subLabel, audioArray] of Object.entries(types)) {
+        const subSection = document.createElement('div');
+        subSection.classList.add("sub-sample-section");
+
+        const subHeader = document.createElement('h4');
+        subHeader.innerText = subLabel;
+        subSection.appendChild(subHeader);
+
+        const audioContainer = document.createElement('div');
+
+        const validAudios = audioArray.filter(path => path && path !== "None");
+
+        if (validAudios.length === 0) {
+            const warning = document.createElement('p');
+            warning.innerText = 'No audio samples available.';
+            audioContainer.appendChild(warning);
+        } else {
+            validAudios.forEach(sample => {
+                const newSample = document.createElement('audio');
+                newSample.controls = true;
+                newSample.src = sample;
+                newSample.type = 'audio/mpeg';
+                audioContainer.appendChild(newSample);
+            });
+        }
+
+        subSection.appendChild(audioContainer);
+        newSection.appendChild(subSection);
+    }
 
     samplesSection.appendChild(newSection);
+}
+
+/**
+ * 
+ * Event listener for clearing previous analysisis
+ * 
+ */
+document.getElementById("analysis-clear-button").addEventListener("click", function (event){
+    event.preventDefault();
+    clearCache();
+});
+
+/**
+ * 
+ * @brief simple function to clear cache, used when previous evaluations are not needed anymore
+ *          removes all graphs and mentiones of previous evaluations
+ * 
+ */
+async function clearCache(){
+    try{
+        // calls an endpoint for cache clearing
+        let processResponse = await fetch('/clear_cache/', { method: 'POST' });
+        let processResult = await processResponse.json();
+
+        if(processResponse.ok){
+            alert("Cached has been cleared: " + processResult.status);
+        }else{
+            alert("Something went wron while trying to clear cache.");
+        }
+    }catch (e){
+        alert("An error occured while trying to clear cache.");
+    }
 }

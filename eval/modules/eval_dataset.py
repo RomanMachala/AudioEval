@@ -18,10 +18,12 @@ from modules.metrics.pesq import eval_pesq, PesqEvaluationError
 from modules.metrics.stoi import eval_stoi, eval_estoi, StoiEvaluationError
 from modules.metrics.mcd import eval_mcd
 from speechmos import dnsmos
-from modules.constants import RESULTS_FILE
+from modules.constants import RESULTS_FILE, UPLOAD_PATH, SAMPLES_PATH
 import concurrent.futures
 from speechmos import dnsmos
 from modules.handlers.log_handler import log_event, save_results, convert
+from modules.handlers.file_handler import delete_temp_files
+from modules.handlers.samples_handler import load_audios
 
 class InvalidMetaFileValue(Exception):
     """Meta file contains an invalid value, skipping current line"""
@@ -193,8 +195,8 @@ def process_line(line: str, dataset_path: str, web_mode: bool, intrusive: bool =
             "file": line.strip(),
             "metrics": {
                 "Mcd": mcd if mcd else None,
-                "Pesq": mcd if pesq else None,
-                "Stoi": mcd if stoi else None,
+                "Pesq": pesq if pesq else None,
+                "Stoi": stoi if stoi else None,
                 "Estoi": estoi if estoi else None,
                 "Mos": mos
             },
@@ -218,7 +220,9 @@ def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intr
     """
     log_event("Evaluation started.", web_mode)
     if not file_name:
-        file_name = RESULTS_FILE    
+        file_name = os.path.join(UPLOAD_PATH, RESULTS_FILE)
+    else:
+        file_name = os.path.join(UPLOAD_PATH, file_name)
     # Get all lines in meta file
     with open(meta, "r") as f:
         lines = f.readlines()
@@ -228,6 +232,7 @@ def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intr
     results_data = {
         "status": "running",
         "path": dataset_path,
+        "intrusive": intrusive,
         "results": []
     }
     save_results(results_data, file_name)
@@ -253,3 +258,5 @@ def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intr
     save_results(results_data, file_name)
 
     log_event("Evaluation completed.", web_mode)
+    log_event(load_audios(UPLOAD_PATH, SAMPLES_PATH))
+    delete_temp_files()

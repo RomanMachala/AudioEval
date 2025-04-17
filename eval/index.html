@@ -21,16 +21,16 @@
     </div>
     <div class="container" id="container">
         <div class="form-container eval-form">
-            <form>
-                <input type="text" id="meta-file" placeholder="Meta file path">
-                <input type="text" id="dataset-path" placeholder="Dataset path">
+            <form id="upload-form-audios">
+                <input type="file" id="folderInput" webkitdirectory multiple />
+                <input type="text" id="meta-file" placeholder="Meta file name">
                 <label for="intrusive">Intrusive evaluation:</label>
                 <input type="checkbox" id="intrusive" name="intrusive">
-                <input type="text" id="save-name" placeholder="Desired output filename">
-                <button type="button" onclick="startEvaluation()">Start evaluation</button>
+                <input type="text" id="save-name" placeholder="Output file name">
+                <button type="submit">Start evaluation</button>
             </form>
             <p>
-                Please input your meta file and dataset path above.
+                Please upload your audio files above.
             </p>
         </div>
         <div class="form-container analysis-form">
@@ -43,6 +43,10 @@
                 Or contintue to previous analysis.
             </p>
             <button id="analysis-button-continue">Continue</button>
+            <p>
+                To clear all previous analysis' click the button below.
+            </p>
+            <button id="analysis-clear-button">Clear Cache</button>
         </div>
 
         <div class="cover-container">
@@ -85,14 +89,15 @@
 
             </div>
             <div class="analysis-back">
-                <button type="button" id="back-button" onclick="goBackToSelect()">Back to selection</button>
+                <button type="button" id="back-button">Back to selection</button>
             </div>
         </div>
     </div>
     <script src="static/js/select.js"></script>
-    <script src="static/js/handleEval.js"></script>
-    <script src="static/js/handleAnalysis.js"></script>
+    <script src="static/js/handleEval.js" type="module"></script>
+    <script src="static/js/handleAnalysis.js" type="module"></script>
     <script src="static/js/analysis.js"></script>
+    <script src="static/js/handleFiles.js" type="module"></script>
 </body>
 
 </html>

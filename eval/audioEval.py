@@ -6,7 +6,7 @@
 __author__      = "Roman Machala"
 __date__        = "31.03.2025"
 __version__     = "0.1"         #stable version
-from fastapi import FastAPI, BackgroundTasks, File, UploadFile
+from fastapi import FastAPI, BackgroundTasks, File, UploadFile, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -17,7 +17,8 @@ from modules.plots.analysis import analysis, table, is_valid
 from modules.eval_dataset import eval_dataset
 from modules.handlers.log_handler import log_messages, log_generator
 from modules.handlers.samples_handler import load_audios
-from modules.constants import UPLOAD_PATH, GRAPHS_PATH, PLOTS_RESULT, SAMPLES_PATH
+from modules.handlers.file_handler import clear_cache
+from modules.constants import UPLOAD_PATH, GRAPHS_PATH, PLOTS_RESULT, SAMPLES_PATH, UPLOAD_DIR
 import sys
 import copy
 
@@ -27,7 +28,7 @@ class EvaluationRequest(BaseModel):
         and dataset_path
     """
     meta_file: str
-    dataset_path: str
+    root_folder: str
     intrusive: bool
     save_name: str
 
@@ -53,18 +54,20 @@ async def start_evaluation(request: EvaluationRequest, background_tasks: Backgro
             background_tasks:   background tasks
     """
     # Extract parameterrs
-    meta_file = request.meta_file
-    dataset_path = request.dataset_path
+    dataset_path = os.path.join(UPLOAD_DIR, request.root_folder)
+    meta_file = os.path.join(dataset_path, request.meta_file)
+
     intrusive = request.intrusive
     filename = None if len(request.save_name) < 1 else request.save_name + '.json'
     #TODO handle filename to actually save as desired name
 
     # Checks for existence of parameters
     if not os.path.exists(meta_file):
-        return JSONResponse(content={"message": "Selected meta file doesn't exist"}, status_code=400)
+        return JSONResponse(content={"message": f"Meta file doesn't exists - {request.meta_file}"}, status_code=400)
     if not os.path.exists(dataset_path):
-        return JSONResponse(content={"message": "Selected dataset path doesn't exist"}, status_code=400)
+        return JSONResponse(content={"message": "Files were not uploaded correctly."}, status_code=400)
     # Start evaluation as background task
+    os.makedirs(UPLOAD_PATH, exist_ok=True)
     background_tasks.add_task(eval_dataset, meta_file, dataset_path, True, intrusive, file_name=filename)
     # Return response
     return JSONResponse(content={"message": "Evaluation started"}, status_code=200)
@@ -165,6 +168,25 @@ async def process_files():
     # Else returns dictionary containing generated graphs paths
     return {"generated_plots": generated_plots}
 
+@app.post("/upload-files")
+async def upload_files(request: Request):
+    """
+        Endpoint for uplaoding files, saves files on server side as temporal files
+    """
+    form = await request.form()
+
+    for key in form:
+        file = form[key]
+        rel_path = key.replace("\\", "/")
+        save_path = os.path.join(UPLOAD_DIR, rel_path)
+        #creates temp files
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+        with open(save_path, "wb") as buffer:
+            buffer.write(await file.read())
+
+    return JSONResponse(content={"status": "success"})
+
 @app.post('/audios/')
 async def get_audios():
     """
@@ -182,6 +204,17 @@ async def stream_logs():
     return StreamingResponse(log_generator(), media_type="text/event-stream")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.post("/clear_cache/")
+async def empty_cache():
+    """
+        Endpoint for cache clearing - removes all previous analysis'
+    """
+    try:
+        clear_cache()
+        return JSONResponse(content={"status": "Success"}, status_code=200)
+    except:
+        return JSONResponse(content={"status": "Error"}, status_code=400)
 
 if __name__ == "__main__":
     #TODO CLI WAY

@@ -1,7 +1,7 @@
 /**
  * 
  * @author Roman Machala
- * @date 18.05.2025
+ * @date 18.02.2025
  * @brief Script file responsible for evaluation logic handling
  *          main functionality: handle evalaution submit form
  *                              start evaluation with correct files
@@ -16,23 +16,22 @@
  *          evaluation function with presented files
  * 
  */
-function startEvaluation() {
+export function startEvaluation(rootFolderName) {
     const metaFile = document.getElementById("meta-file").value;
-    const datasetPath = document.getElementById("dataset-path").value;
     const intrusive = document.getElementById("intrusive").checked;
     const filename = document.getElementById("save-name").value;
     /* Form values, presented file, dataset path and whether to use intrusive evaluation aswell */
 
     /* If there were no values presented */
-    if (!metaFile || !datasetPath) {
-        alert("Please enter both meta file path and dataset path.");
+    if (!metaFile) {
+        alert("Please enter the name of the meta file.");
         return;
     }
     /* Else start evaluation */
     fetch("/start-evaluation/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ meta_file: metaFile, dataset_path: datasetPath, intrusive: intrusive, save_name: filename })
+        body: JSON.stringify({ meta_file: metaFile, root_folder: rootFolderName, intrusive: intrusive, save_name: filename })
     })
     .then(response => response.json())
     .then(data => {
@@ -120,9 +119,9 @@ function handleLog(message, section){
  */
 function clearInputs(){
     document.getElementById("meta-file").value = "";
-    document.getElementById("dataset-path").value = "";
     document.getElementById("intrusive").checked = false;
     document.getElementById("save-name").value = "";
+    document.getElementById('folderInput').value = "";
 }
 
 /**
