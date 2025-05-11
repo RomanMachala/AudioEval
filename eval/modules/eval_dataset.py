@@ -205,6 +205,7 @@ def process_line(line: str, dataset_path: str, web_mode: bool, intrusive: bool =
 
     except Exception as e:
         # In case of an error
+        print(e)
         raise Exception
     
 def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intrusive: bool=False, file_name: str=None):
@@ -226,7 +227,6 @@ def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intr
     # Get all lines in meta file
     with open(meta, "r") as f:
         lines = f.readlines()
-    #total = len(lines)
 
     # json output result
     results_data = {

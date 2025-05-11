@@ -114,9 +114,7 @@ def load_audios(upload_path: str, sample_path:str):
                 if i >= NUM_OF_SAMPLES:
                     break
                 ref, gen = handle_filename(audio, dataset_path, intrusive)
-                print(ref, gen)
                 web_ref, web_gen, res = move_audios(ref, gen, sample_path, intrusive, file.split(".")[0])
-                print(web_ref, web_gen, res)
                 if res:
                     if i == 0:
                         samples[f"{file.split('.')[0]}"] = {

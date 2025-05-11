@@ -58,13 +58,14 @@ async function displayAnalysis(flag){
             displayGraphs(processResult.generated_plots.plots);
             displayTables(processResult.generated_plots.tables);
             console.log(processResult.generated_plots);
+            console.log(processResult.generated_plots.tables);
         } else {
             updateModalText("Error generating graphs.");
             alert("Error generating graphs.");
             return;
         }
     }catch (error){
-        console.log(error);
+        console.warn(error);
         alert("An error occured while trying to display analysis section");
         // Revert back to selection
         revert();
@@ -101,7 +102,6 @@ document.getElementById("upload-form").addEventListener("submit", async function
         });
 
         let result = await response.json();
-        console.log(JSON.stringify(result, null, 2));
 
         updateModalText("Loading files...");
         if (result.valid_files && result.valid_files.length > 0) {
@@ -223,15 +223,12 @@ function createMetricSection(metric){
  * 
  */
 function displayGraphs(graphs) {
-    console.log(graphs);
     for (const [metric, paths] of Object.entries(graphs)) {
         /* Select corresponding HTML element based on metric */
-        console.log(metric);
         createMetricSection(metric);
         let section = document.getElementById(`${metric}-section`).querySelector(".charts-container");
         section.innerHTML = ""; /* If there are some graphs remove them */
         paths.forEach(path => {
-            console.log(path);
             if (path === null || path === undefined || path === "" || path === "null") return;
             /* For each path (one path = one graph) create an img element with said path*/
             let img = document.createElement("img");
@@ -396,7 +393,7 @@ document.getElementById("back-button").addEventListener("click", function (event
  * @returns formatted value
  */
 function formatValue(value) {
-    return isNaN(value) ? "N/A" : value.toFixed(2);
+    return value === null || value === undefined || isNaN(value) ? "N/A" : value.toFixed(2);
 }
 
 /**
@@ -411,19 +408,14 @@ async function getSamples() {
         let processResult = await processResponse.json();
         // if got audio paths
         if (processResponse.ok) {
-            console.log("Got a positive response for audio samples.");
-            console.log(processResult);
             displaySamples(processResult.samples);
             //display them
         } else {
-            console.log("Got a negative response for audio samples.");
+            console.warn("Got a negative response for audio samples.");
             return;
         }
     }catch (error){
-        console.log(error);
-        return;
-    }finally{
-        console.log("Done getting samples");
+        console.warn(error);
         return;
     }
 }

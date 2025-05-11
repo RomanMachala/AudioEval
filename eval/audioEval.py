@@ -117,6 +117,7 @@ async def process_files():
         # Goes through all files in upload path folder
     for filename in os.listdir(UPLOAD_PATH):
         file_path = os.path.join(UPLOAD_PATH, filename)
+        print(filename)
         try:
             with open(file_path, 'r') as f:
                 # Gets file content
@@ -131,9 +132,10 @@ async def process_files():
             file_name = os.path.splitext(filename)[0]
             # For each metric that is in column of said dataframe
             # creates a graph and adds it into the dict
-            print(data.columns)
             for metric in data.columns:
                 if metric != 'file':
+                    if file_name not in generated_plots['tables']['Files']:
+                        generated_plots['tables']['Files'].append(file_name)
                     plot_path = os.path.join(GRAPHS_PATH, f'{file_name}_{metric}.png')
                     if is_valid(data, metric):
                         web_path = plot_path.replace("static" + os.sep, "/static/")
@@ -150,11 +152,11 @@ async def process_files():
                             generated_plots['tables']['Values']['sig_mos'].append(values[1])
                             generated_plots['tables']['Values']['bak_mos'].append(values[2])
                             generated_plots['tables']['Values']['p808_mos'].append(values[3])
-                        print("appended new file name")
-                        if file_name not in generated_plots['tables']['Files']:
-                            generated_plots['tables']['Files'].append(file_name)
                     else:
-                        web_path = "null"
+                        web_path = None
+                        if metric not in generated_plots['tables']['Values']:
+                            generated_plots['tables']['Values'][metric] = list()
+                        generated_plots['tables']['Values'][metric].append([None, None, None, None])
                     # adds generated graph path to corresponding metric in dict
                     if metric not in generated_plots['plots']:
                         generated_plots['plots'][metric] = list()
@@ -221,5 +223,4 @@ if __name__ == "__main__":
     from modules.handlers.arg_handler import handle_arguments
     #FOR CLI EVALUATION ONLY 
     meta, dataset, save, intrusive = handle_arguments(sys.argv)
-    RESULTS_FILE = save
-    eval_dataset(meta=meta, dataset_path=dataset if dataset != 'none' else None, web_mode=False, intrusive=True if intrusive == 'true' else False)
+    eval_dataset(meta=meta, dataset_path=dataset, web_mode=False, intrusive=True if intrusive == 'true' else False, file_name=save)

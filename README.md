@@ -28,7 +28,6 @@ The author of this project and said Bachelor's thesis is Roman Machala.
     - [Analysis processing](#analysis-processing)
     - [Dynamic section generation](#dynamic-section-generation)
     - [Samples visualization](#sample-visualization)
-- [Literature](#literature)
 
 ## Foreword
 Text-to-Speeh (TTS) is a system capable of synthesizing speech based on prived text input using the computer. These systems have made significant advancements in recent years, especially in nature, intelligibility, etc. This project aims to provide a **audio evaluation tool** for these systems to evaluate their capabilities concerning audio quality. This tool utilizes some **objective** evaluation metrics to assess audio. Compared to **subjective** metrics (such as MOS) that require human listeners, this approach is time and cost-friendly.
@@ -87,10 +86,6 @@ conda create --name AudioEval
 conda activate AudioEval
 pip install -r requirements.txt
 ```
-And after that install the mel-cepstral-dostortion library
-```
-pip install git+https://github.com/jasminsternkopf/mel_cepstral_distance.git
-```
 
 ## Usage
 The system can be started in two modes:
@@ -100,7 +95,10 @@ The system can be started in two modes:
 If possible, the **web mode** approach is recommended.
 It is also possible that the script might require *sudo*.
 ### Windows
-
+To use this system on Windows simpy start the system in web mode by using the following command in the **eval** directory:
+```
+uvicorn audioEvall:app --reload
+```
 ### Linux
 To use this system on linux, simply use the *start_eval.sh* script.
 
@@ -135,9 +133,9 @@ dataset/
             |---sample_03.wav
                 ...
     |---audios_ref/
-        |---sample_01.wav
-        |---sample_02.wav
-        |---sample_03.wav
+            |---sample_01.wav
+            |---sample_02.wav
+            |---sample_03.wav
                 ...
     |---meta
 ```
@@ -242,7 +240,7 @@ def process_line(params):
             "Stoi": stoi if stoi else None,
             "Estoi": estoi if estoi else None,
             "Mos": mos if mos else None,
-            "x": x if x else one # added new metric to the results
+            "x": x if x else None # added new metric to the results
         }
     }
     return results # returns audio assessment results with new metric (x)
@@ -294,7 +292,7 @@ Each evaluation metric is imported as a module from it's own *.py* file located 
 ### Evaluation
 When using the *web mode* the application fetches results from an endpoint **/start-evaluation/**, defined in [audioEval.py](eval/audioEval.py). The main structure can be seen below:
 ```python
-@app.post("/start-evaluation/)
+@app.post("/start-evaluation/")
 async def start_evaluation(request)
     meta_file       = request.meta
     dataset_path    = request.dataset
@@ -491,5 +489,3 @@ function displaySamples(){
     }
 }
 ```
-
-## TODO
