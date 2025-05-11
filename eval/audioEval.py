@@ -97,8 +97,8 @@ async def upload_files(files: list[UploadFile] = File(...)):
                 # creates new file in upload path and dumps it' values into it
                 f.write(content)
             valid_files.append(file.filename)
-        except json.JSONDecodeError:
-            continue
+        except Exception:
+            continue # skip invalid file
     # Returns all valid files 
     return {"message": "Upload complete", "valid_files": valid_files}
 
@@ -117,7 +117,6 @@ async def process_files():
         # Goes through all files in upload path folder
     for filename in os.listdir(UPLOAD_PATH):
         file_path = os.path.join(UPLOAD_PATH, filename)
-        print(filename)
         try:
             with open(file_path, 'r') as f:
                 # Gets file content
@@ -161,7 +160,7 @@ async def process_files():
                     if metric not in generated_plots['plots']:
                         generated_plots['plots'][metric] = list()
                     generated_plots['plots'][metric].append(web_path)
-        except ValueError:
+        except Exception:
             #TODO better handling, if and exception occurs skips it
             continue
     # If there are no generated plots just return error

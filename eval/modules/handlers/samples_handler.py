@@ -103,12 +103,13 @@ def load_audios(upload_path: str, sample_path:str):
                     data = json.load(f) 
                     dataset_path = data["path"]
                     intrusive = data["intrusive"]
-                except Exception:
-                    print("exception occured")
-                    continue
+                    raw_data = pd.DataFrame(data['results']) 
+                    audios = raw_data['file'].tolist()
+                except Exception as e:
+                    print(e)
+                    continue    # skip current file with invalid values
             
-            raw_data = pd.DataFrame(data['results']) 
-            audios = raw_data['file'].tolist()
+
             i = 0
             for audio in audios:
                 if i >= NUM_OF_SAMPLES:

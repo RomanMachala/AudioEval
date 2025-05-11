@@ -109,6 +109,7 @@ function handleLog(message, section){
         section.scrollTop = section.scrollHeight;
     } catch (error) {
         section.textContent += message + "\n";
+        section.scrollTop = section.scrollHeight;
     }
 }
 

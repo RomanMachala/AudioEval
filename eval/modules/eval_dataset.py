@@ -95,7 +95,7 @@ def get_audios(line: str, dataset_path: str) -> list[Audio]:
     file_paths = line.strip().split()
     # If line in meta file doesnt contain 2 files, raise an exception
     if(len(file_paths) != 2):
-        raise InvalidMetaFileValue
+        raise InvalidMetaFileValue("Invalid line in meta file - couldn't load both: reference and generated sample.")
     
     if dataset_path:
         return [Audio(os.path.join(
@@ -182,11 +182,17 @@ def process_line(line: str, dataset_path: str, web_mode: bool, intrusive: bool =
     try:
         # Gets reference and generated audio
         if intrusive:
-            ref_audio, gen_audio = get_audios(line=line, dataset_path=dataset_path)
+            try:
+                ref_audio, gen_audio = get_audios(line=line, dataset_path=dataset_path)
+            except InvalidMetaFileValue as e:
+                raise e
             # Gets evaluation
             mcd, pesq, stoi, estoi, mos = eval_audio(ref_audio=ref_audio, gen_audio=gen_audio)
         else:
-            audio_path = line.strip()
+            if " " in line:
+                audio_path = line.strip().split(" ")[1]
+            else:
+                audio_path = line.strip()
             gen_audio = Audio(audio_path if dataset_path is None else os.path.join(dataset_path, audio_path))
             mos = dnsmos.run(gen_audio.normalize(), 16000)
             mcd, pesq, stoi, estoi = None, None, None, None
@@ -205,8 +211,7 @@ def process_line(line: str, dataset_path: str, web_mode: bool, intrusive: bool =
 
     except Exception as e:
         # In case of an error
-        print(e)
-        raise Exception
+        raise e
     
 def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intrusive: bool=False, file_name: str=None):
     """
@@ -251,6 +256,8 @@ def eval_dataset(meta: str, dataset_path: str = None, web_mode: bool=False, intr
                 log_event(result, web_mode=web_mode)
             except Exception as e:
                 log_event(e, web_mode=web_mode)
+                log_event("Please check your meta file, audio files or selected mode of evaluation.", web_mode=web_mode)
+                continue
 
     #End of an evaluation
     results_data["status"] = "completed"
